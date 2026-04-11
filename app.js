@@ -6,7 +6,7 @@
    TU_WEBHOOK_FORMULARIO -> URL del escenario Factura en Make
 ===================================================== */
 
-var WEBHOOK_FORM = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
+var WEBHOOK_FORM = 'https://hook.us2.make.com/TU_WEBHOOK_FORMULARIO';
 
 /* =====================================================
    CATÁLOGO SAT
@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-enviar').addEventListener('click', function() { enviar(); });
   document.getElementById('btn-add-conc').addEventListener('click', function() { addConc(); });
 
+  document.getElementById('rfc_emisor').addEventListener('input', function() { this.value=this.value.toUpperCase(); clrE('rfc_emisor'); });
   document.getElementById('rfc').addEventListener('input', function() { this.value=this.value.toUpperCase(); clrE('rfc'); });
   document.getElementById('email').addEventListener('input', function() { clrE('email'); });
   document.getElementById('usd').addEventListener('change', function() { document.getElementById('tcwrap').style.display='flex'; });
@@ -181,8 +182,10 @@ function actualizarUI() {
 function validar(p) {
   var ok=true;
   if (p===1) {
-    var rfc=document.getElementById('rfc').value.trim();
-    if(rfc.length<12){marcarErr('rfc');ok=false;}
+    var rfcE=document.getElementById('rfc_emisor').value.trim();
+    if(rfcE.length<12){marcarErr('rfc_emisor');ok=false;}
+    var rfcR=document.getElementById('rfc').value.trim();
+    if(rfcR.length<12){marcarErr('rfc');ok=false;}
     var em=document.getElementById('email').value.trim();
     if(!em||em.indexOf('@')<1){marcarErr('email');ok=false;}
   }
@@ -358,8 +361,9 @@ function armarResumen(){
   var mon=document.querySelector('input[name=mon]:checked');
   var conceptos=recolectarConceptos();
   var datos=[
+    {l:'Tu RFC (Emisor)',    v:val('rfc_emisor'), full:true},
     {l:'RFC Receptor',      v:val('rfc')},
-    {l:'Correo',            v:val('email')},
+    {l:'Tu correo',         v:val('email')},
     {l:'Metodo de pago',    v:mp?mp.value:''},
     {l:'Forma de pago',     v:val('forma')},
     {l:'Moneda',            v:mon?mon.value:'MXN'},
@@ -385,10 +389,16 @@ function enviar(){
   var mon=document.querySelector('input[name=mon]:checked');
   var data={
     folio:folio, timestamp:new Date().toISOString(),
+    emisor:{
+      rfc:val('rfc_emisor')
+      /* Accepti busca en catalogo: razon social, regimen, retenciones, CSD */
+    },
     receptor:{
       rfc:val('rfc'),
       email:val('email'),
+      email_receptor:val('email_receptor'),
       tel:val('tel')
+      /* Accepti busca en catalogo: razon social, regimen, uso CFDI */
     },
     pago:{
       metodo:mp?mp.value:'PUE',
