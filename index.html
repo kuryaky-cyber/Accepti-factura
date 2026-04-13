@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solicitud de Factura — Accepti Contadores</title>
+<title>Solicitud de CFDI — Accepti Contadores</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-:root{--teal:#00A99D;--teal2:#007F76;--coral:#F15A29;--navy:#0D2B5E;--blue:#1E4FA0;--ink:#1A1A2E;--muted:#6B7280;--lite:#F0FAF9;--bg:#F7F8FC;--white:#FFFFFF;--border:#E2E8F0;--field:#FAFBFF;--red:#DC2626;--green:#16A34A}
+:root{--teal:#00A99D;--teal2:#007F76;--coral:#F15A29;--navy:#0D2B5E;--blue:#1E4FA0;--ink:#1A1A2E;--muted:#6B7280;--lite:#F0FAF9;--bg:#F7F8FC;--white:#FFFFFF;--border:#E2E8F0;--field:#FAFBFF;--red:#DC2626;--green:#16A34A;--yellow:#F59E0B}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:60px}
 .topbar{background:var(--navy);padding:7px 32px;display:flex;justify-content:space-between;align-items:center}
-.topbar span{font-size:12px;color:rgba(255,255,255,.55);font-weight:300}
+.topbar span{font-size:12px;color:rgba(255,255,255,.55)}
 .topbar a{font-size:12px;color:var(--teal);text-decoration:none;font-weight:600}
 header{background:var(--white);border-bottom:3px solid var(--teal);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:68px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
@@ -18,7 +18,7 @@ header{background:var(--white);border-bottom:3px solid var(--teal);padding:0 32p
 .bico{width:44px;height:44px;display:none;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;border-radius:8px;overflow:hidden;flex-shrink:0}
 .bico span{display:block}
 .bc1{background:#00A99D}.bc2{background:#F15A29}.bc3{background:#1E4FA0}.bc4{background:#F7C31A}
-.bname{font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px;line-height:1}
+.bname{font-family:'Montserrat',sans-serif;font-size:17px;font-weight:800;color:var(--navy);line-height:1}
 .bname em{color:var(--teal);font-style:normal}
 .bsub{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
 .hright{text-align:right;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
@@ -26,363 +26,706 @@ header{background:var(--white);border-bottom:3px solid var(--teal);padding:0 32p
 .hright a{color:var(--teal);text-decoration:none}
 .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 60%,var(--teal2) 100%);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .hero h2{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#fff}
-.hero p{font-size:13px;color:rgba(255,255,255,.65);margin-top:3px;font-weight:300}
+.hero p{font-size:13px;color:rgba(255,255,255,.65);margin-top:3px}
 .cpill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;padding:6px 14px;border-radius:4px;letter-spacing:1px;white-space:nowrap}
-.steps{background:var(--white);border-bottom:1px solid var(--border);display:flex;padding:0 32px;overflow-x:auto}
-.stab{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:3px solid transparent;cursor:default;white-space:nowrap;transition:border-color .2s}
-.stab.active{border-bottom-color:var(--teal)}
-.stab.done{border-bottom-color:var(--teal2)}
+.stepbar{background:var(--white);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:6px;overflow-x:auto}
+.sb{display:flex;align-items:center;gap:6px}
 .snum{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .2s}
-.stab.active .snum{background:var(--teal);color:#fff}
-.stab.done .snum{background:var(--teal2);color:#fff}
-.stitle{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.stab.active .stitle,.stab.done .stitle{color:var(--teal2)}
-.sdesc{font-size:11px;color:var(--muted);font-weight:300}
-.ssep{color:var(--border);padding:0 4px;font-size:18px;align-self:center}
-.wrapper{max-width:800px;margin:28px auto 0;padding:0 18px}
+.snum.active{background:var(--teal);color:#fff}
+.snum.done{background:var(--teal2);color:#fff}
+.slabel{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap}
+.slabel.active,.slabel.done{color:var(--teal2)}
+.sarrow{color:var(--border);font-size:16px}
+.wrapper{max-width:820px;margin:28px auto 0;padding:0 18px}
 .card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.05);display:none;overflow:hidden}
-.card.active{display:block;animation:fadeup .35s ease}
-@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.chead{background:linear-gradient(90deg,var(--lite) 0%,var(--white) 70%);border-bottom:1px solid var(--border);padding:18px 26px;display:flex;align-items:center;gap:13px}
+.card.active{display:block;animation:fadeup .3s ease}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chead{background:linear-gradient(90deg,var(--lite),var(--white) 70%);border-bottom:1px solid var(--border);padding:18px 26px;display:flex;align-items:center;gap:13px}
 .cico{width:38px;height:38px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.chead h2{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+.chead h2{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
 .chead p{font-size:12px;color:var(--muted);margin-top:2px}
 .fields{padding:22px 26px;display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
 .f{display:flex;flex-direction:column;gap:5px}
 .f.full{grid-column:1/-1}
-label{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.6px}
-.r{color:var(--coral);margin-left:2px}
+.f.hide{display:none!important}
+label{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+.r{color:var(--coral)}
 input,select,textarea{background:var(--field);border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Lato',sans-serif;font-size:14px;color:var(--ink);transition:border-color .2s,box-shadow .2s;outline:none;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,169,157,.1)}
-input.err,select.err{border-color:var(--red)}
+input.err,select.err{border-color:var(--red)!important}
 input::placeholder,textarea::placeholder{color:#C5D0DC;font-style:italic}
 select{cursor:pointer}
-select option{background:var(--white)}
-textarea{resize:vertical;min-height:80px}
 .hint{font-size:11px;color:var(--muted)}
 .emsg{font-size:11px;color:var(--red);display:none;font-weight:600}
 .pfx{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;background:var(--field);transition:border-color .2s,box-shadow .2s}
 .pfx:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,169,157,.1)}
+.pfx.err{border-color:var(--red)!important}
 .pfxl{padding:10px 11px;background:var(--lite);border-right:1.5px solid var(--border);font-size:13px;color:var(--teal2);font-weight:700;white-space:nowrap}
 .pfx input{border:none;border-radius:0;background:transparent;box-shadow:none}
 .pills{display:flex;gap:8px;flex-wrap:wrap}
 .pr{display:none}
-.pl{padding:7px 14px;border-radius:4px;border:1.5px solid var(--border);font-size:12px;font-weight:600;font-family:'Montserrat',sans-serif;cursor:pointer;transition:all .2s;color:var(--muted)}
+.pl{padding:7px 14px;border-radius:4px;border:1.5px solid var(--border);font-size:12px;font-weight:600;font-family:'Montserrat',sans-serif;cursor:pointer;transition:all .2s;color:var(--muted);user-select:none}
 .pr:checked+.pl{background:var(--teal);border-color:var(--teal);color:#fff}
-.csf-zone{margin:0 26px;border:2px dashed var(--teal);border-radius:10px;padding:20px 24px;background:var(--lite);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px}
-.csf-zone:hover{background:#dff4f2;border-color:var(--teal2)}
-.csf-zone input[type=file]{display:none}
-.csf-left{flex-shrink:0;width:44px;height:44px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px}
-.csf-text h3{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--navy)}
-.csf-text p{font-size:12px;color:var(--muted);margin-top:2px}
-.csf-btn{margin-left:auto;flex-shrink:0;background:var(--teal);color:#fff;border:none;border-radius:5px;padding:9px 18px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-.csf-status{margin:10px 26px 0;border-radius:8px;padding:12px 16px;display:none;align-items:center;gap:12px;font-size:13px}
-.csf-status.loading{display:flex;background:#FFF8ED;border:1px solid #F7C31A;color:#92610A}
-.csf-status.ok{display:flex;background:#EDFFF5;border:1px solid #86EFAC;color:#14532D}
-.csf-status.error{display:flex;background:#FFF0EE;border:1px solid #FECACA;color:#7F1D1D}
-.csf-spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,.1);border-top-color:#F7C31A;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.divider{display:flex;align-items:center;gap:12px;margin:18px 26px 0;color:var(--muted);font-size:12px}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-.divider span{white-space:nowrap;font-family:'Montserrat',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+/* Tipo CFDI cards */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 26px}
+.tipo-card{border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;display:flex;gap:12px;align-items:flex-start;background:var(--field)}
+.tipo-card:hover{border-color:var(--teal);background:var(--lite)}
+.tipo-card.sel{border-color:var(--teal);background:var(--lite);box-shadow:0 0 0 3px rgba(0,169,157,.1)}
+.tipo-ico{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.tc-factura .tipo-ico{background:#EDF4FF;color:var(--blue)}
+.tc-pago    .tipo-ico{background:#EDFFF5;color:var(--green)}
+.tc-porte_i .tipo-ico{background:#FFF8ED;color:var(--yellow)}
+.tc-porte_t .tipo-ico{background:#FFF0EE;color:var(--coral)}
+.tipo-t{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--navy)}
+.tipo-d{font-size:11px;color:var(--muted);margin-top:3px}
+.tipo-chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .2s}
+.tipo-card.sel .tipo-chk{background:var(--teal);border-color:var(--teal);color:#fff}
+/* Conceptos */
+.concs{padding:0 26px 14px}
+.conc{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;animation:fadeup .25s ease}
+.chead2{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cnum{background:var(--teal);color:#fff;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;padding:3px 10px;border-radius:3px}
+.cdesc-wrap{flex:1}
+.cdesc-wrap input{width:100%}
+.btnrm{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:var(--red);border-radius:5px;padding:5px 10px;cursor:pointer;font-size:14px;line-height:1}
 .satwrap{position:relative}
-.satinput{padding:10px 12px 10px 36px !important}
-.satico{position:absolute;left:12px;top:11px;font-size:14px;pointer-events:none;z-index:1}
-.satdrop{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--teal);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:200;display:none;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.satinput{padding-left:34px!important}
+.satico{position:absolute;left:11px;top:11px;font-size:14px;pointer-events:none}
+.satdrop{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--teal);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:500;display:none;box-shadow:0 8px 20px rgba(0,0,0,.1)}
 .satdrop.open{display:block}
-.satitem{padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .15s;display:flex;gap:10px;align-items:baseline}
-.satitem:last-child{border-bottom:none}
+.satitem{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:baseline;transition:background .1s}
 .satitem:hover{background:var(--lite)}
-.satcode{font-family:monospace;font-size:11px;color:var(--teal2);font-weight:700;background:var(--lite);padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.satitem:last-child{border-bottom:none}
+.satcode{font-family:monospace;font-size:11px;color:var(--teal2);font-weight:700;background:var(--lite);padding:2px 5px;border-radius:3px;white-space:nowrap;flex-shrink:0}
 .satcat{font-size:10px;color:var(--muted)}
-.nores{padding:12px 14px;font-size:13px;color:var(--muted);font-style:italic;text-align:center}
-.satmanual{display:flex;align-items:center;gap:8px;background:var(--field);border:1.5px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:7px 12px}
+.satmanual{display:flex;align-items:center;gap:8px;background:var(--field);border:1.5px solid var(--border);border-top:none;border-radius:0 0 6px 6px;padding:6px 12px}
 .satmanual span{font-size:11px;color:var(--muted);white-space:nowrap}
-.satmanual input{flex:1;border:none;background:transparent;font-size:13px;font-family:monospace;padding:4px 6px;color:var(--ink);outline:none;max-width:140px;width:auto}
-.satsel{display:none;margin-top:6px;padding:8px 12px;background:var(--lite);border:1px solid var(--teal);border-radius:6px;font-size:12px;color:var(--teal2);align-items:center;gap:8px}
+.satmanual input{flex:1;max-width:130px;border:none;background:transparent;font-size:13px;font-family:monospace;padding:4px;outline:none}
+.satsel{display:none;margin-top:5px;padding:7px 11px;background:var(--lite);border:1px solid var(--teal);border-radius:6px;font-size:12px;color:var(--teal2);align-items:center;gap:8px}
 .satsel.show{display:flex}
 .satsel strong{font-family:monospace;font-weight:700}
-.satclr{margin-left:auto;cursor:pointer;color:var(--muted);font-size:16px;background:none;border:none;line-height:1;padding:0 4px}
-.concs{padding:0 26px 14px}
-.conc{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;animation:fadeup .3s ease}
-.chead2{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.cnum{background:var(--teal);color:#fff;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;padding:3px 10px;border-radius:3px;letter-spacing:.5px;white-space:nowrap}
-.cdesc{flex:1}
-.cdesc input{width:100%}
-.btnrm{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.15);color:var(--red);border-radius:5px;padding:5px 10px;cursor:pointer;font-size:14px;transition:all .2s}
-.btnrm:hover{background:rgba(220,38,38,.18)}
+.satclr{margin-left:auto;cursor:pointer;color:var(--muted);font-size:16px;background:none;border:none;padding:0 3px}
+.nores{padding:10px 14px;font-size:12px;color:var(--muted);font-style:italic;text-align:center}
 .cgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
 .cgrid .f label{font-size:10px}
-.cgrid .f input,.cgrid .f select{padding:8px 10px;font-size:13px}
-.cgrid .pfxl{padding:8px 10px;font-size:12px}
-.btnadd{display:block;width:100%;background:transparent;border:2px dashed var(--teal);color:var(--teal2);border-radius:8px;padding:11px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px}
+.cgrid input,.cgrid select{padding:8px 10px;font-size:13px}
+.cgrid .pfxl{padding:8px 9px;font-size:12px}
+.btnadd{display:block;width:100%;background:transparent;border:2px dashed var(--teal);color:var(--teal2);border-radius:8px;padding:10px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .btnadd:hover{background:var(--lite)}
-.totales{margin:0 26px 22px;background:var(--navy);border-radius:8px;padding:16px 20px;color:#fff}
-.trow{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:rgba(255,255,255,.6)}
-.trow span:last-child{font-weight:500;color:rgba(255,255,255,.9)}
-.trow.grand{border-top:1px solid rgba(255,255,255,.15);margin-top:8px;padding-top:12px;font-family:'Montserrat',sans-serif;font-size:17px;font-weight:700;color:var(--teal)}
-.trow.grand span:last-child{color:#fff;font-size:20px}
+/* Totales */
+.totbox{margin:0 26px 20px;background:var(--navy);border-radius:8px;padding:14px 18px;color:#fff}
+.trow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:rgba(255,255,255,.6)}
+.trow span:last-child{color:rgba(255,255,255,.9);font-weight:500}
+.trow.grand{border-top:1px solid rgba(255,255,255,.15);margin-top:8px;padding-top:10px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;color:var(--teal)}
+.trow.grand span:last-child{color:#fff;font-size:19px}
+.totbox .hint{color:rgba(255,255,255,.4);font-size:11px;margin-top:8px}
+/* Mercancias CP */
+.mercs{padding:0 26px 14px}
+.merc{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;animation:fadeup .25s ease}
+.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+/* Resumen */
 .resgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px 26px}
 .ri{background:var(--field);border:1px solid var(--border);border-radius:6px;padding:11px 14px}
 .ri.full{grid-column:1/-1}
-.ril{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.ril{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .riv{font-size:14px;font-weight:500;color:var(--navy)}
-.riv.big{color:var(--teal2);font-size:18px;font-weight:700}
+.riv.big{color:var(--teal2);font-size:17px;font-weight:700}
+.riv.tipo{color:var(--blue);font-weight:700;font-family:'Montserrat',sans-serif}
+/* Checkbox */
 .checksec{padding:0 26px 18px;display:flex;align-items:flex-start;gap:10px}
 .checksec input[type=checkbox]{width:16px;height:16px;margin-top:3px;flex-shrink:0;accent-color:var(--teal)}
 .checksec label{font-size:12px;color:var(--muted);font-family:'Lato',sans-serif;text-transform:none;letter-spacing:0;font-weight:400}
 .checksec a{color:var(--teal2)}
+/* Nav */
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 20px;border-top:1px solid var(--border)}
 .stepof{font-size:12px;color:var(--muted);font-style:italic}
-.btn{padding:11px 26px;border-radius:5px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:none;text-transform:uppercase;letter-spacing:.5px}
+.btn{padding:11px 24px;border-radius:5px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:none;text-transform:uppercase;letter-spacing:.5px}
 .btnp{background:var(--teal);color:#fff}
-.btnp:hover{background:var(--teal2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,169,157,.3)}
+.btnp:hover{background:var(--teal2);transform:translateY(-1px)}
 .btnb{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
-.btnb:hover{background:var(--bg);color:var(--navy)}
-.btns{background:var(--coral);color:#fff;padding:11px 36px}
+.btnb:hover{background:var(--bg)}
+.btns{background:var(--coral);color:#fff;padding:11px 32px}
 .btns:hover{background:#d14820;transform:translateY(-1px)}
-.success{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:56px 36px;text-align:center;display:none;box-shadow:0 2px 14px rgba(0,0,0,.05)}
+/* Success */
+.success{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:48px 36px;text-align:center;display:none}
 .success.active{display:block;animation:fadeup .5s ease}
-.sucico{width:72px;height:72px;background:rgba(0,169,157,.1);border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px}
-.success h2{font-family:'Montserrat',sans-serif;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:8px}
-.success p{font-size:14px;color:var(--muted);max-width:400px;margin:0 auto 16px}
-.folio{display:inline-block;background:var(--lite);border:2px solid var(--teal);border-radius:6px;padding:10px 28px;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;color:var(--teal2);letter-spacing:3px;margin-bottom:24px}
-.nextsteps{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;text-align:left;max-width:400px;margin:0 auto 20px}
-.nextsteps h3{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
-.nextsteps li{font-size:13px;list-style:none;padding:5px 0;display:flex;gap:8px}
-.nextsteps .dot{color:var(--teal);font-weight:700}
-footer{background:var(--navy);color:rgba(255,255,255,.45);text-align:center;padding:14px;font-size:11px;margin-top:36px}
+.sucico{width:68px;height:68px;background:rgba(0,169,157,.1);border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+.success h2{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.success p{font-size:14px;color:var(--muted);max-width:420px;margin:0 auto 14px}
+.folio{display:inline-block;background:var(--lite);border:2px solid var(--teal);border-radius:6px;padding:9px 26px;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:var(--teal2);letter-spacing:3px;margin-bottom:20px}
+.nxtlist{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 18px;text-align:left;max-width:400px;margin:0 auto 18px}
+.nxtlist h3{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.nxtlist li{font-size:13px;list-style:none;padding:4px 0;display:flex;gap:8px}
+.nxtlist .dot{color:var(--teal);font-weight:700}
+footer{background:var(--navy);color:rgba(255,255,255,.4);text-align:center;padding:13px;font-size:11px;margin-top:36px}
 footer a{color:var(--teal);text-decoration:none}
+.sec-info{background:var(--lite);border:1px solid rgba(0,169,157,.2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted)}
+.sec-info strong{color:var(--teal2)}
+.divline{grid-column:1/-1;border-top:1.5px dashed var(--border);margin:4px 0}
+.sec-title{grid-column:1/-1;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;padding:4px 0 0}
 @media(max-width:600px){
-  .topbar,header,.hero{padding:10px 16px}
-  .steps{padding:0 12px}
-  .fields,.resgrid{grid-template-columns:1fr;padding:14px 16px}
-  .f.full{grid-column:1}
-  .chead{padding:14px 16px}
-  .concs{padding:0 14px 12px}
-  .totales{margin:0 14px 18px}
-  .nav{padding:12px 16px 16px}
-  .checksec{padding:0 16px 14px}
-  .hright{display:none}
-  .cgrid{grid-template-columns:1fr 1fr}
+.topbar,header,.hero{padding:10px 16px}
+.stepbar{padding:12px 16px}
+.fields{grid-template-columns:1fr;padding:14px 16px}
+.f.full{grid-column:1}
+.tipo-grid{grid-template-columns:1fr;padding:14px 16px}
+.chead,.nav{padding:14px 16px}
+.concs,.mercs{padding:0 14px 12px}
+.totbox{margin:0 14px 16px}
+.resgrid{grid-template-columns:1fr;padding:14px 16px}
+.checksec{padding:0 14px 14px}
+.cgrid{grid-template-columns:1fr 1fr}
+.mgrid{grid-template-columns:1fr 1fr}
+.hright{display:none}
 }
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <span>Privada 14B Sur 6703, Villa Universitaria, Puebla &nbsp;&middot;&nbsp; (222) 755-0328</span>
+  <span>Privada 14B Sur 6703, Villa Universitaria, Puebla &middot; (222) 755-0328</span>
   <a href="https://www.accepti.com.mx" target="_blank">accepti.com.mx</a>
 </div>
-
 <header>
   <a class="brand" href="https://www.accepti.com.mx" target="_blank">
-    <img id="logo-img"
-      src="https://static.wixstatic.com/media/dca6eb_24aec97af69f477e97f2dd5bb2d615fe~mv2.png/v1/fill/w_80,h_80,al_c,q_85,enc_avif,quality_auto/ICONO%20COLORES-05.png"
-      alt="Accepti" width="44" height="44">
-    <div class="bico" id="logo-fallback">
-      <span class="bc1"></span><span class="bc2"></span><span class="bc3"></span><span class="bc4"></span>
-    </div>
-    <div>
-      <div class="bname">ACCEPT<em>I</em></div>
-      <div class="bsub">Contadores S.C.</div>
-    </div>
+    <img id="logo-img" src="https://static.wixstatic.com/media/dca6eb_24aec97af69f477e97f2dd5bb2d615fe~mv2.png/v1/fill/w_80,h_80,al_c,q_85,enc_avif,quality_auto/ICONO%20COLORES-05.png" alt="Accepti" width="44" height="44">
+    <div class="bico" id="logo-fb"><span class="bc1"></span><span class="bc2"></span><span class="bc3"></span><span class="bc4"></span></div>
+    <div><div class="bname">ACCEPT<em>I</em></div><div class="bsub">Contadores S.C.</div></div>
   </a>
   <div class="hright">
     <span>WhatsApp <strong>(222) 864-2948</strong></span>
     <a href="https://www.accepti.com.mx" target="_blank">contabilidad arroba accepti.com.mx</a>
   </div>
 </header>
-
 <div class="hero">
   <div>
-    <h2>Solicitud de Factura Electr&oacute;nica</h2>
-    <p>Completa el formulario y recibir&aacute;s tu CFDI 4.0 en tu correo en pocas horas h&aacute;biles</p>
+    <h2>Solicitud de Comprobante Fiscal (CFDI 4.0)</h2>
+    <p>Factura de Ingreso &middot; Complemento de Pago &middot; Carta Porte 3.1</p>
   </div>
-  <div class="cpill">CFDI 4.0 &middot; SAT</div>
+  <div class="cpill">SAT &middot; CFDI 4.0</div>
 </div>
 
-<div class="steps">
-  <div class="stab active" id="st1"><div class="snum" id="sn1">1</div><div><div class="stitle">Receptor</div><div class="sdesc">Datos fiscales</div></div></div>
-  <div class="ssep">&rsaquo;</div>
-  <div class="stab" id="st2"><div class="snum" id="sn2">2</div><div><div class="stitle">Conceptos</div><div class="sdesc">Productos / servicios</div></div></div>
-  <div class="ssep">&rsaquo;</div>
-  <div class="stab" id="st3"><div class="snum" id="sn3">3</div><div><div class="stitle">Pago</div><div class="sdesc">Forma y m&eacute;todo</div></div></div>
-  <div class="ssep">&rsaquo;</div>
-  <div class="stab" id="st4"><div class="snum" id="sn4">4</div><div><div class="stitle">Confirmar</div><div class="sdesc">Revisar y enviar</div></div></div>
-</div>
+<div class="stepbar" id="stepbar"></div>
 
 <div class="wrapper">
 
-<!-- PASO 1 -->
+<!-- CARD 1: Tipo CFDI + Emisor -->
 <div class="card active" id="card1">
-  <div class="chead"><div class="cico">&#127962;</div><div><h2>Datos del Receptor</h2><p>Indica tu empresa (emisor) y a qui&eacute;n va dirigida la factura (receptor). Accepti gestiona los datos fiscales.</p></div></div>
-
+  <div class="chead"><div class="cico">&#128196;</div><div><h2>Tipo de Comprobante y tu Empresa</h2><p>Selecciona el tipo de CFDI que necesitas y proporciona tu RFC</p></div></div>
+  <div class="tipo-grid">
+    <div class="tipo-card tc-factura" id="tc-factura">
+      <div class="tipo-ico">&#128178;</div>
+      <div><div class="tipo-t">Factura de Ingreso</div><div class="tipo-d">CFDI por venta de bienes o servicios prestados</div></div>
+      <div class="tipo-chk" id="chk-factura"></div>
+    </div>
+    <div class="tipo-card tc-pago" id="tc-pago">
+      <div class="tipo-ico">&#9989;</div>
+      <div><div class="tipo-t">Complemento de Pago</div><div class="tipo-d">Para liquidar facturas emitidas con metodo PPD</div></div>
+      <div class="tipo-chk" id="chk-pago"></div>
+    </div>
+    <div class="tipo-card tc-porte_i" id="tc-porte_i">
+      <div class="tipo-ico">&#128666;</div>
+      <div><div class="tipo-t">Carta Porte &mdash; Ingreso</div><div class="tipo-d">Transporte de mercancias con cobro al cliente</div></div>
+      <div class="tipo-chk" id="chk-porte_i"></div>
+    </div>
+    <div class="tipo-card tc-porte_t" id="tc-porte_t">
+      <div class="tipo-ico">&#128665;</div>
+      <div><div class="tipo-t">Carta Porte &mdash; Traslado</div><div class="tipo-d">Traslado propio sin cobro (factura en ceros)</div></div>
+      <div class="tipo-chk" id="chk-porte_t"></div>
+    </div>
+  </div>
   <div class="fields">
-
-    <!-- BLOQUE EMISOR -->
-    <div class="f full" style="background:var(--lite);border:1.5px solid rgba(0,169,157,.3);border-radius:10px;padding:16px 18px">
-      <div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;color:var(--teal2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">&#127970; Tu empresa (Emisor de la factura)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">
-        <div class="f">
-          <label>Tu RFC <span class="r">*</span></label>
-          <input type="text" id="rfc_emisor" placeholder="Tu RFC empresarial" maxlength="13" style="font-family:monospace;letter-spacing:1px;text-transform:uppercase">
-          <span class="hint">El RFC de tu empresa o negocio</span>
-          <span class="emsg" id="e-rfc_emisor">Tu RFC es requerido</span>
-        </div>
-        <div class="f">
-          <label>Tu correo electr&oacute;nico <span class="r">*</span></label>
-          <input type="email" id="email" placeholder="tu@empresa.com">
-          <span class="hint">Aqu&iacute; recibir&aacute;s el XML y PDF</span>
-          <span class="emsg" id="e-email">Correo inv&aacute;lido</span>
-        </div>
-        <div class="f">
-          <label>Tel&eacute;fono (opcional)</label>
-          <input type="tel" id="tel" placeholder="222 123 4567" maxlength="10">
-        </div>
-      </div>
-    </div>
-
-    <!-- BLOQUE RECEPTOR -->
-    <div class="f full" style="background:#FFF8ED;border:1.5px solid rgba(241,90,41,.2);border-radius:10px;padding:16px 18px;margin-top:4px">
-      <div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;color:var(--coral);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">&#128196; A quien va dirigida la factura (Receptor)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">
-        <div class="f">
-          <label>RFC del receptor <span class="r">*</span></label>
-          <input type="text" id="rfc" placeholder="RFC de quien recibe la factura" maxlength="13" style="font-family:monospace;letter-spacing:1px;text-transform:uppercase">
-          <span class="hint">Persona moral: 12 caracteres &middot; Persona f&iacute;sica: 13 caracteres</span>
-          <span class="emsg" id="e-rfc">RFC del receptor requerido</span>
-        </div>
-        <div class="f">
-          <label>Correo del receptor (opcional)</label>
-          <input type="email" id="email_receptor" placeholder="correo@receptor.com">
-          <span class="hint">Para enviarle copia de la factura directamente</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="f full" style="background:var(--field);border:1px solid var(--border);border-radius:8px;padding:11px 14px">
-      <div style="font-size:12px;color:var(--muted)">&#128274; Accepti configurar&aacute; autom&aacute;ticamente las retenciones, r&eacute;gimen fiscal y uso del CFDI con base en el perfil registrado de tu empresa. Dudas: <strong>(222) 864-2948</strong></div>
-    </div>
-
-  </div>
-  <div class="nav">
-    <span class="stepof">Paso 1 de 4</span>
-    <button class="btn btnp" id="btn-next-1">Continuar &rarr;</button>
-  </div>
-</div>
-
-<!-- PASO 2 -->
-<div class="card" id="card2">
-  <div class="chead"><div class="cico">&#128230;</div><div><h2>Conceptos de la Factura</h2><p>Agrega los productos o servicios. Busca la clave SAT por nombre o escr&iacute;bela manualmente.</p></div></div>
-  <div class="concs" id="conc-list"></div>
-  <button class="btnadd" id="btn-add-conc" style="margin:0 26px 14px;width:calc(100% - 52px)">+ Agregar otro concepto</button>
-  <div class="totales">
-    <div class="trow"><span>Subtotal</span><span id="t-sub">$0.00</span></div>
-    <div class="trow"><span>Descuento</span><span id="t-des">$0.00</span></div>
-    <div class="trow grand"><span>Importe Neto (sin impuestos)</span><span id="t-neto">$0.00</span></div>
-    <div class="trow" style="font-size:11px;color:rgba(255,255,255,.5);padding-top:8px">
-      <span colspan="2">IVA, retenciones y total final los calcula Accepti<br>segun tu perfil fiscal registrado</span>
-    </div>
-  </div>
-  <div class="nav">
-    <button class="btn btnb" id="btn-prev-2">&larr; Anterior</button>
-    <button class="btn btnp" id="btn-next-2">Continuar &rarr;</button>
-  </div>
-</div>
-
-<!-- PASO 3 -->
-<div class="card" id="card3">
-  <div class="chead"><div class="cico">&#128179;</div><div><h2>Datos de Pago</h2><p>Indica c&oacute;mo fue o ser&aacute; liquidada esta factura</p></div></div>
-  <div class="fields">
-    <div class="f full">
-      <label>M&eacute;todo de pago</label>
-      <div class="pills">
-        <input type="radio" name="mp" id="pue" value="PUE" class="pr" checked><label for="pue" class="pl">PUE &middot; Una sola exhibici&oacute;n</label>
-        <input type="radio" name="mp" id="ppd" value="PPD" class="pr"><label for="ppd" class="pl">PPD &middot; Parcialidades / Diferido</label>
-      </div>
-      <span class="hint">PUE = pagado en el mismo mes &nbsp;&middot;&nbsp; PPD = requiere complemento de pago posterior</span>
+    <div class="f">
+      <label>Tu RFC (Emisor) <span class="r">*</span></label>
+      <input type="text" id="rfc_emisor" placeholder="RFC de tu empresa" maxlength="13" style="font-family:monospace;letter-spacing:1px;text-transform:uppercase">
+      <span class="hint">Accepti jalara del catalogo tu razon social, regimen y datos fiscales</span>
+      <span class="emsg" id="e-rfc_emisor">RFC invalido, minimo 12 caracteres</span>
     </div>
     <div class="f">
-      <label>Forma de pago</label>
-      <select id="forma">
-        <option value="01">01 &middot; Efectivo</option>
-        <option value="02">02 &middot; Cheque nominativo</option>
-        <option value="03" selected>03 &middot; Transferencia electr&oacute;nica</option>
-        <option value="04">04 &middot; Tarjeta de cr&eacute;dito</option>
-        <option value="05">05 &middot; Monedero electr&oacute;nico</option>
-        <option value="28">28 &middot; Tarjeta de d&eacute;bito</option>
-        <option value="29">29 &middot; Tarjeta de servicios</option>
-        <option value="99">99 &middot; Por definir (PPD)</option>
+      <label>Tu correo electronico <span class="r">*</span></label>
+      <input type="email" id="email_emisor" placeholder="tu@empresa.com">
+      <span class="hint">Aqui recibiras el XML y PDF de tu CFDI</span>
+      <span class="emsg" id="e-email_emisor">Correo invalido</span>
+    </div>
+  </div>
+  <div class="nav"><span class="stepof" id="sf1"></span><button class="btn btnp" id="btn-n1">Continuar &rarr;</button></div>
+</div>
+
+<!-- CARD 2: Receptor -->
+<div class="card" id="card2">
+  <div class="chead"><div class="cico">&#127962;</div><div><h2>Datos del Receptor</h2><p>Datos exactamente como aparecen en la Constancia de Situacion Fiscal del receptor</p></div></div>
+  <div class="fields">
+    <div class="f">
+      <label>RFC del Receptor <span class="r">*</span></label>
+      <input type="text" id="rfc_receptor" placeholder="RFC de quien recibe el CFDI" maxlength="13" style="font-family:monospace;letter-spacing:1px;text-transform:uppercase">
+      <span class="emsg" id="e-rfc_receptor">RFC invalido</span>
+    </div>
+    <div class="f">
+      <label>Nombre / Razon Social <span class="r">*</span></label>
+      <input type="text" id="nombre_receptor" placeholder="SIN regimen juridico, en MAYUSCULAS" style="text-transform:uppercase">
+      <span class="hint">Exactamente como aparece en la CSF: sin S.A. de C.V., sin S.C., etc.</span>
+      <span class="emsg" id="e-nombre_receptor">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Codigo Postal Fiscal <span class="r">*</span></label>
+      <input type="text" id="cp_receptor" placeholder="72000" maxlength="5">
+      <span class="hint">El del domicilio registrado en el SAT</span>
+      <span class="emsg" id="e-cp_receptor">5 digitos requeridos</span>
+    </div>
+    <div class="f">
+      <label>Regimen Fiscal <span class="r">*</span></label>
+      <select id="regimen_receptor">
+        <option value="">Seleccionar...</option>
+        <option value="601">601 - General de Ley Personas Morales</option>
+        <option value="603">603 - Personas Morales sin Fines Lucrativos</option>
+        <option value="605">605 - Sueldos y Salarios</option>
+        <option value="606">606 - Arrendamiento</option>
+        <option value="607">607 - Enajenacion o Adquisicion de Bienes</option>
+        <option value="608">608 - Demas ingresos</option>
+        <option value="610">610 - Residentes en el Extranjero</option>
+        <option value="611">611 - Ingresos por Dividendos</option>
+        <option value="612">612 - Actividades Empresariales y Profesionales</option>
+        <option value="614">614 - Ingresos por Intereses</option>
+        <option value="615">615 - Ingresos por Premios</option>
+        <option value="616">616 - Sin Obligaciones Fiscales</option>
+        <option value="620">620 - Sociedades Cooperativas de Produccion</option>
+        <option value="621">621 - Incorporacion Fiscal (RIF)</option>
+        <option value="622">622 - Agricolas, Ganaderas, Silvicolas y Pesqueras</option>
+        <option value="623">623 - Opcional para Grupos de Sociedades</option>
+        <option value="624">624 - Coordinados</option>
+        <option value="625">625 - Plataformas Tecnologicas</option>
+        <option value="626">626 - RESICO (Simplificado de Confianza)</option>
+        <option value="628">628 - Hidrocarburos</option>
+        <option value="629">629 - Regimenes Fiscales Preferentes</option>
+        <option value="630">630 - Enajenacion de acciones en bolsa</option>
       </select>
+      <span class="emsg" id="e-regimen_receptor">Campo requerido</span>
+    </div>
+    <div class="f full">
+      <label>Uso del CFDI <span class="r">*</span></label>
+      <select id="uso_cfdi">
+        <option value="">Seleccionar...</option>
+        <optgroup label="Gastos">
+          <option value="G01">G01 - Adquisicion de mercancias</option>
+          <option value="G02">G02 - Devoluciones, descuentos o bonificaciones</option>
+          <option value="G03">G03 - Gastos en general</option>
+        </optgroup>
+        <optgroup label="Inversiones">
+          <option value="I01">I01 - Construcciones</option>
+          <option value="I02">I02 - Mobilario y equipo de oficina</option>
+          <option value="I03">I03 - Equipo de transporte</option>
+          <option value="I04">I04 - Equipo de computo</option>
+          <option value="I05">I05 - Dados, troqueles y moldes</option>
+          <option value="I06">I06 - Comunicaciones telefonicas</option>
+          <option value="I07">I07 - Comunicaciones satelitales</option>
+          <option value="I08">I08 - Otra maquinaria y equipo</option>
+        </optgroup>
+        <optgroup label="Deducciones personales">
+          <option value="D01">D01 - Honorarios medicos y dentales</option>
+          <option value="D02">D02 - Gastos medicos por incapacidad</option>
+          <option value="D03">D03 - Gastos funerales</option>
+          <option value="D04">D04 - Donativos</option>
+          <option value="D05">D05 - Intereses hipotecarios</option>
+          <option value="D06">D06 - Aportaciones al SAR</option>
+          <option value="D07">D07 - Seguros gastos medicos</option>
+          <option value="D08">D08 - Transportacion escolar obligatoria</option>
+          <option value="D09">D09 - Depositos ahorro y planes de pension</option>
+          <option value="D10">D10 - Colegiaturas</option>
+        </optgroup>
+        <optgroup label="Especiales">
+          <option value="S01">S01 - Sin efectos fiscales</option>
+          <option value="CP01">CP01 - Pagos (complemento de pago)</option>
+          <option value="CN01">CN01 - Nomina</option>
+        </optgroup>
+      </select>
+      <span class="emsg" id="e-uso_cfdi">Campo requerido</span>
+    </div>
+    <div class="f full">
+      <label>Correo del Receptor (opcional)</label>
+      <input type="email" id="email_receptor" placeholder="correo@receptor.com">
+      <span class="hint">Para enviarle copia del CFDI directamente</span>
+    </div>
+  </div>
+  <div class="nav"><button class="btn btnb" id="btn-p2">&larr; Anterior</button><span class="stepof" id="sf2"></span><button class="btn btnp" id="btn-n2">Continuar &rarr;</button></div>
+</div>
+
+<!-- CARD 3: Conceptos O Complemento de Pago -->
+<div class="card" id="card3">
+  <div class="chead"><div class="cico" id="ico3">&#128230;</div><div><h2 id="t3">Conceptos de la Factura</h2><p id="sub3">Agrega los productos o servicios. Puedes agregar multiples conceptos.</p></div></div>
+
+  <!-- SECCION: Conceptos (factura, porte_i, porte_t) -->
+  <div id="sec-conceptos">
+    <div class="concs" id="conc-list"></div>
+    <div style="padding:0 26px 10px"><button class="btnadd" id="btn-add-conc">+ Agregar concepto</button></div>
+    <div class="totbox">
+      <div class="trow"><span>Subtotal</span><span id="t-sub">$0.00</span></div>
+      <div class="trow"><span>Descuento</span><span id="t-des">$0.00</span></div>
+      <div class="trow grand"><span>Importe Neto</span><span id="t-neto">$0.00</span></div>
+      <div class="hint">IVA y retenciones los calcula Accepti segun tu perfil fiscal</div>
+    </div>
+  </div>
+
+  <!-- SECCION: Complemento de Pago -->
+  <div id="sec-pago" style="display:none">
+    <div class="fields">
+      <div class="f full">
+        <div class="sec-info">El complemento de pago se emite cuando una factura PPD ya fue liquidada. Proporciona los datos del pago recibido.</div>
+      </div>
+      <div class="f full">
+        <label>UUID de la Factura Original <span class="r">*</span></label>
+        <input type="text" id="uuid_origen" placeholder="Folio Fiscal: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" style="font-family:monospace;font-size:12px;text-transform:uppercase">
+        <span class="hint">El UUID de 36 caracteres que aparece en el XML de la factura a pagar</span>
+        <span class="emsg" id="e-uuid_origen">UUID invalido, debe tener 36 caracteres con guiones</span>
+      </div>
+      <div class="f">
+        <label>Serie de la Factura Original</label>
+        <input type="text" id="serie_origen" placeholder="Ej. A">
+        <span class="hint">Opcional, si la factura tiene serie</span>
+      </div>
+      <div class="f">
+        <label>Folio de la Factura Original</label>
+        <input type="text" id="folio_origen" placeholder="Ej. 1025">
+        <span class="hint">Numero de folio de la factura original</span>
+      </div>
+      <div class="f">
+        <label>Fecha y Hora del Pago <span class="r">*</span></label>
+        <input type="datetime-local" id="fecha_pago">
+        <span class="emsg" id="e-fecha_pago">Fecha requerida</span>
+      </div>
+      <div class="f">
+        <label>Forma en que se recibio el Pago <span class="r">*</span></label>
+        <select id="forma_pago_cp">
+          <option value="">Seleccionar...</option>
+          <option value="01">01 - Efectivo</option>
+          <option value="02">02 - Cheque nominativo</option>
+          <option value="03">03 - Transferencia electronica</option>
+          <option value="04">04 - Tarjeta de credito</option>
+          <option value="05">05 - Monedero electronico</option>
+          <option value="06">06 - Dinero electronico</option>
+          <option value="28">28 - Tarjeta de debito</option>
+          <option value="29">29 - Tarjeta de servicios</option>
+          <option value="99">99 - Por definir</option>
+        </select>
+        <span class="emsg" id="e-forma_pago_cp">Campo requerido</span>
+      </div>
+      <div class="f">
+        <label>Monto Pagado <span class="r">*</span></label>
+        <div class="pfx" id="pfx-monto"><span class="pfxl">$</span><input type="number" id="monto_pago" placeholder="1500.00" min="0.01" step="0.01"></div>
+        <span class="emsg" id="e-monto_pago">Monto invalido</span>
+      </div>
+      <div class="f">
+        <label>Numero de Parcialidad <span class="r">*</span></label>
+        <input type="number" id="num_parcialidad" placeholder="1" min="1" step="1" value="1">
+        <span class="hint">1 = primer pago, 2 = segundo pago, etc.</span>
+        <span class="emsg" id="e-num_parcialidad">Campo requerido</span>
+      </div>
+      <div class="f">
+        <label>Saldo Anterior (antes de este pago) <span class="r">*</span></label>
+        <div class="pfx"><span class="pfxl">$</span><input type="number" id="saldo_anterior" placeholder="2000.00" min="0" step="0.01"></div>
+        <span class="hint">Total pendiente de la factura antes de este abono</span>
+        <span class="emsg" id="e-saldo_anterior">Campo requerido</span>
+      </div>
+      <div class="f">
+        <label>Moneda del Pago</label>
+        <div class="pills">
+          <input type="radio" name="mon_cp" id="cp-mxn" value="MXN" class="pr" checked><label for="cp-mxn" class="pl">MXN</label>
+          <input type="radio" name="mon_cp" id="cp-usd" value="USD" class="pr"><label for="cp-usd" class="pl">USD</label>
+        </div>
+      </div>
+      <div class="f">
+        <label>Numero de Operacion (opcional)</label>
+        <input type="text" id="num_operacion" placeholder="Ej. 1234567890">
+        <span class="hint">Referencia bancaria o numero de cheque</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav"><button class="btn btnb" id="btn-p3">&larr; Anterior</button><span class="stepof" id="sf3"></span><button class="btn btnp" id="btn-n3">Continuar &rarr;</button></div>
+</div>
+
+<!-- CARD 4: Forma de Pago General (Factura y Carta Porte Ingreso) -->
+<div class="card" id="card4">
+  <div class="chead"><div class="cico">&#128179;</div><div><h2>Datos de Pago</h2><p>Indica como fue o sera liquidada esta factura</p></div></div>
+  <div class="fields">
+    <div class="f full">
+      <label>Metodo de Pago</label>
+      <div class="pills">
+        <input type="radio" name="metodo" id="m-pue" value="PUE" class="pr" checked><label for="m-pue" class="pl">PUE &mdash; Una sola exhibicion</label>
+        <input type="radio" name="metodo" id="m-ppd" value="PPD" class="pr"><label for="m-ppd" class="pl">PPD &mdash; Parcialidades / Diferido</label>
+      </div>
+      <span class="hint">PUE = pagado en el mismo mes &middot; PPD = se pagara despues, requiere Complemento de Pago</span>
+    </div>
+    <div class="f">
+      <label>Forma de Pago <span class="r">*</span></label>
+      <select id="forma_pago">
+        <option value="">Seleccionar...</option>
+        <option value="01">01 - Efectivo</option>
+        <option value="02">02 - Cheque nominativo</option>
+        <option value="03" selected>03 - Transferencia electronica</option>
+        <option value="04">04 - Tarjeta de credito</option>
+        <option value="05">05 - Monedero electronico</option>
+        <option value="06">06 - Dinero electronico</option>
+        <option value="08">08 - Vales de despensa</option>
+        <option value="12">12 - Dacion en pago</option>
+        <option value="17">17 - Compensacion</option>
+        <option value="28">28 - Tarjeta de debito</option>
+        <option value="29">29 - Tarjeta de servicios</option>
+        <option value="30">30 - Aplicacion de anticipos</option>
+        <option value="99">99 - Por definir (usar con PPD)</option>
+      </select>
+      <span class="emsg" id="e-forma_pago">Campo requerido</span>
     </div>
     <div class="f">
       <label>Moneda</label>
       <div class="pills">
-        <input type="radio" name="mon" id="mxn" value="MXN" class="pr" checked><label for="mxn" class="pl">MXN &middot; Peso</label>
-        <input type="radio" name="mon" id="usd" value="USD" class="pr"><label for="usd" class="pl">USD &middot; D&oacute;lar</label>
+        <input type="radio" name="moneda" id="mon-mxn" value="MXN" class="pr" checked><label for="mon-mxn" class="pl">MXN &mdash; Peso</label>
+        <input type="radio" name="moneda" id="mon-usd" value="USD" class="pr"><label for="mon-usd" class="pl">USD &mdash; Dolar</label>
       </div>
     </div>
-    <div class="f" id="tcwrap" style="display:none">
-      <label>Tipo de cambio</label>
-      <div class="pfx"><span class="pfxl">1 USD =</span><input type="number" id="tc" placeholder="17.50" step="0.01" min="1"></div>
+    <div class="f hide" id="f-tc">
+      <label>Tipo de Cambio</label>
+      <div class="pfx"><span class="pfxl">1 USD =</span><input type="number" id="tipo_cambio" placeholder="17.50" step="0.01" min="1"></div>
     </div>
     <div class="f full">
-      <label>Referencia / N&uacute;mero de OC (opcional)</label>
-      <input type="text" id="ref" placeholder="OC-2024-001, proyecto, contrato&hellip;">
+      <label>Referencia / Numero de OC (opcional)</label>
+      <input type="text" id="referencia" placeholder="OC-2026-001, numero de proyecto, contrato...">
     </div>
     <div class="f full">
       <label>Notas adicionales (opcional)</label>
-      <textarea id="notas" placeholder="Instrucciones especiales, periodo facturado, etc."></textarea>
+      <textarea id="notas" rows="3" placeholder="Periodo facturado, instrucciones especiales..."></textarea>
     </div>
   </div>
-  <div class="nav">
-    <button class="btn btnb" id="btn-prev-3">&larr; Anterior</button>
-    <button class="btn btnp" id="btn-next-3">Continuar &rarr;</button>
-  </div>
+  <div class="nav"><button class="btn btnb" id="btn-p4">&larr; Anterior</button><span class="stepof" id="sf4"></span><button class="btn btnp" id="btn-n4">Continuar &rarr;</button></div>
 </div>
 
-<!-- PASO 4 -->
-<div class="card" id="card4">
-  <div class="chead"><div class="cico">&#9989;</div><div><h2>Confirmar Solicitud</h2><p>Revisa que todo sea correcto. Una vez timbrada la factura no puede modificarse.</p></div></div>
+<!-- CARD 5: Carta Porte 3.1 -->
+<div class="card" id="card5">
+  <div class="chead"><div class="cico">&#128666;</div><div><h2>Complemento Carta Porte 3.1</h2><p>Datos requeridos por el SAT para el traslado de mercancias</p></div></div>
+  <div class="fields">
+    <div class="f full">
+      <label>Transporte Internacional</label>
+      <div class="pills">
+        <input type="radio" name="transp_int" id="ti-no" value="No" class="pr" checked><label for="ti-no" class="pl">No (Nacional)</label>
+        <input type="radio" name="transp_int" id="ti-si" value="Si" class="pr"><label for="ti-si" class="pl">Si (Internacional)</label>
+      </div>
+    </div>
+
+    <div class="sec-title">Ubicacion Origen</div>
+    <div class="f">
+      <label>RFC del Remitente <span class="r">*</span></label>
+      <input type="text" id="cp_rfc_origen" placeholder="RFC de quien envia" maxlength="13" style="font-family:monospace;text-transform:uppercase">
+      <span class="emsg" id="e-cp_rfc_origen">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Codigo Postal Origen <span class="r">*</span></label>
+      <input type="text" id="cp_cp_origen" placeholder="72000" maxlength="5">
+      <span class="emsg" id="e-cp_cp_origen">5 digitos requeridos</span>
+    </div>
+    <div class="f">
+      <label>Estado Origen <span class="r">*</span></label>
+      <select id="cp_est_origen">
+        <option value="">Seleccionar...</option>
+        <option value="AGU">Aguascalientes</option><option value="BCN">Baja California</option>
+        <option value="BCS">Baja California Sur</option><option value="CAM">Campeche</option>
+        <option value="CHP">Chiapas</option><option value="CHH">Chihuahua</option>
+        <option value="CMX">Ciudad de Mexico</option><option value="COA">Coahuila</option>
+        <option value="COL">Colima</option><option value="DUR">Durango</option>
+        <option value="MEX">Estado de Mexico</option><option value="GUA">Guanajuato</option>
+        <option value="GRO">Guerrero</option><option value="HID">Hidalgo</option>
+        <option value="JAL">Jalisco</option><option value="MIC">Michoacan</option>
+        <option value="MOR">Morelos</option><option value="NAY">Nayarit</option>
+        <option value="NLE">Nuevo Leon</option><option value="OAX">Oaxaca</option>
+        <option value="PUE">Puebla</option><option value="QUE">Queretaro</option>
+        <option value="ROO">Quintana Roo</option><option value="SLP">San Luis Potosi</option>
+        <option value="SIN">Sinaloa</option><option value="SON">Sonora</option>
+        <option value="TAB">Tabasco</option><option value="TAM">Tamaulipas</option>
+        <option value="TLA">Tlaxcala</option><option value="VER">Veracruz</option>
+        <option value="YUC">Yucatan</option><option value="ZAC">Zacatecas</option>
+      </select>
+      <span class="emsg" id="e-cp_est_origen">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Municipio Origen <span class="r">*</span></label>
+      <input type="text" id="cp_mun_origen" placeholder="Nombre del municipio">
+      <span class="hint">Accepti asignara el codigo SAT correspondiente</span>
+      <span class="emsg" id="e-cp_mun_origen">Campo requerido</span>
+    </div>
+    <div class="f full">
+      <label>Fecha y Hora de Salida <span class="r">*</span></label>
+      <input type="datetime-local" id="cp_fecha_salida">
+      <span class="emsg" id="e-cp_fecha_salida">Campo requerido</span>
+    </div>
+
+    <div class="sec-title">Ubicacion Destino</div>
+    <div class="f">
+      <label>RFC del Destinatario <span class="r">*</span></label>
+      <input type="text" id="cp_rfc_destino" placeholder="RFC de quien recibe" maxlength="13" style="font-family:monospace;text-transform:uppercase">
+      <span class="emsg" id="e-cp_rfc_destino">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Codigo Postal Destino <span class="r">*</span></label>
+      <input type="text" id="cp_cp_destino" placeholder="72000" maxlength="5">
+      <span class="emsg" id="e-cp_cp_destino">5 digitos requeridos</span>
+    </div>
+    <div class="f">
+      <label>Estado Destino <span class="r">*</span></label>
+      <select id="cp_est_destino">
+        <option value="">Seleccionar...</option>
+        <option value="AGU">Aguascalientes</option><option value="BCN">Baja California</option>
+        <option value="BCS">Baja California Sur</option><option value="CAM">Campeche</option>
+        <option value="CHP">Chiapas</option><option value="CHH">Chihuahua</option>
+        <option value="CMX">Ciudad de Mexico</option><option value="COA">Coahuila</option>
+        <option value="COL">Colima</option><option value="DUR">Durango</option>
+        <option value="MEX">Estado de Mexico</option><option value="GUA">Guanajuato</option>
+        <option value="GRO">Guerrero</option><option value="HID">Hidalgo</option>
+        <option value="JAL">Jalisco</option><option value="MIC">Michoacan</option>
+        <option value="MOR">Morelos</option><option value="NAY">Nayarit</option>
+        <option value="NLE">Nuevo Leon</option><option value="OAX">Oaxaca</option>
+        <option value="PUE">Puebla</option><option value="QUE">Queretaro</option>
+        <option value="ROO">Quintana Roo</option><option value="SLP">San Luis Potosi</option>
+        <option value="SIN">Sinaloa</option><option value="SON">Sonora</option>
+        <option value="TAB">Tabasco</option><option value="TAM">Tamaulipas</option>
+        <option value="TLA">Tlaxcala</option><option value="VER">Veracruz</option>
+        <option value="YUC">Yucatan</option><option value="ZAC">Zacatecas</option>
+      </select>
+      <span class="emsg" id="e-cp_est_destino">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Municipio Destino <span class="r">*</span></label>
+      <input type="text" id="cp_mun_destino" placeholder="Nombre del municipio">
+      <span class="hint">Accepti asignara el codigo SAT correspondiente</span>
+      <span class="emsg" id="e-cp_mun_destino">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Fecha y Hora de Llegada <span class="r">*</span></label>
+      <input type="datetime-local" id="cp_fecha_llegada">
+      <span class="emsg" id="e-cp_fecha_llegada">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Distancia Recorrida (km) <span class="r">*</span></label>
+      <input type="number" id="cp_distancia" placeholder="150" min="1" step="1">
+      <span class="emsg" id="e-cp_distancia">Campo requerido</span>
+    </div>
+
+    <div class="sec-title">Mercancias Transportadas</div>
+  </div>
+  <div class="mercs" id="merc-list"></div>
+  <div style="padding:0 26px 10px"><button class="btnadd" id="btn-add-merc">+ Agregar mercancia</button></div>
+
+  <div class="fields">
+    <div class="sec-title">Vehiculo (Autotransporte Federal)</div>
+    <div class="f">
+      <label>Permiso SCT <span class="r">*</span></label>
+      <select id="cp_perm_sct">
+        <option value="TPAF01">TPAF01 - Carga general</option>
+        <option value="TPAF02">TPAF02 - Mat. y residuos peligrosos</option>
+        <option value="TPAF03">TPAF03 - Fondos y valores</option>
+        <option value="TPAF04">TPAF04 - Automoviles</option>
+        <option value="TPAF05">TPAF05 - Mudanzas</option>
+        <option value="TPAF06">TPAF06 - Gruas industriales</option>
+        <option value="TPAF07">TPAF07 - Equipos y maquinaria</option>
+        <option value="TPAF08">TPAF08 - Gruas de arrastre</option>
+        <option value="TPAF09">TPAF09 - Materiales de construccion</option>
+        <option value="TPAF10">TPAF10 - Paqueteria y mensajeria</option>
+        <option value="TPAF11">TPAF11 - Carga refrigerada</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Numero de Permiso SCT <span class="r">*</span></label>
+      <input type="text" id="cp_num_perm" placeholder="Ej. 1234567">
+      <span class="emsg" id="e-cp_num_perm">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Configuracion Vehicular</label>
+      <select id="cp_config_veh">
+        <option value="VL">VL - Vehiculo Ligero</option>
+        <option value="C2">C2 - Camion 2 ejes</option>
+        <option value="C3">C3 - Camion 3 ejes</option>
+        <option value="C2R2">C2R2 - Camion-Remolque 2+2 ejes</option>
+        <option value="T3S2">T3S2 - Tractocamion-Semirremolque 3+2</option>
+        <option value="T3S3">T3S3 - Tractocamion-Semirremolque 3+3</option>
+        <option value="T3S2R4">T3S2R4 - Tractocamion Full 3+2+4</option>
+        <option value="T3S3R2">T3S3R2 - Tractocamion Full 3+3+2</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Placa del Vehiculo <span class="r">*</span></label>
+      <input type="text" id="cp_placa" placeholder="ABC1234" style="text-transform:uppercase">
+      <span class="emsg" id="e-cp_placa">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Anio del Vehiculo <span class="r">*</span></label>
+      <input type="number" id="cp_anio" placeholder="2020" min="1990" max="2030">
+      <span class="emsg" id="e-cp_anio">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Peso Bruto Vehicular (Ton)</label>
+      <input type="number" id="cp_peso_v" placeholder="8.5" min="0" step="0.01">
+    </div>
+
+    <div class="sec-title">Seguro del Vehiculo</div>
+    <div class="f">
+      <label>Aseguradora Resp. Civil <span class="r">*</span></label>
+      <input type="text" id="cp_aseg" placeholder="Ej. GNP, AXA, Qualitas...">
+      <span class="emsg" id="e-cp_aseg">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Poliza Resp. Civil <span class="r">*</span></label>
+      <input type="text" id="cp_poliza" placeholder="Numero de poliza">
+      <span class="emsg" id="e-cp_poliza">Campo requerido</span>
+    </div>
+
+    <div class="sec-title">Operador (Figura de Transporte)</div>
+    <div class="f">
+      <label>RFC del Operador <span class="r">*</span></label>
+      <input type="text" id="cp_rfc_op" placeholder="RFC del conductor" maxlength="13" style="font-family:monospace;text-transform:uppercase">
+      <span class="emsg" id="e-cp_rfc_op">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Nombre del Operador <span class="r">*</span></label>
+      <input type="text" id="cp_nom_op" placeholder="Nombre completo del conductor">
+      <span class="emsg" id="e-cp_nom_op">Campo requerido</span>
+    </div>
+    <div class="f">
+      <label>Numero de Licencia <span class="r">*</span></label>
+      <input type="text" id="cp_licencia" placeholder="Numero de licencia federal">
+      <span class="emsg" id="e-cp_licencia">Campo requerido</span>
+    </div>
+  </div>
+  <div class="nav"><button class="btn btnb" id="btn-p5">&larr; Anterior</button><span class="stepof" id="sf5"></span><button class="btn btnp" id="btn-n5">Continuar &rarr;</button></div>
+</div>
+
+<!-- CARD 6: Confirmar -->
+<div class="card" id="card6">
+  <div class="chead"><div class="cico">&#9989;</div><div><h2>Confirmar Solicitud</h2><p>Revisa que todo sea correcto. Una vez enviado no puede modificarse.</p></div></div>
   <div class="resgrid" id="resumen"></div>
   <div class="checksec">
     <input type="checkbox" id="acepto">
-    <label for="acepto">Confirmo que los datos fiscales son correctos y coinciden con mi Constancia de Situaci&oacute;n Fiscal. Acepto los <a href="https://www.accepti.com.mx" target="_blank">T&eacute;rminos de Servicio</a> de Accepti Contadores S.C.</label>
+    <label for="acepto">Confirmo que los datos son correctos y autorizo a Accepti Contadores S.C. a procesar y timbrar este CFDI ante el SAT. <a href="https://www.accepti.com.mx" target="_blank">Terminos de servicio</a>.</label>
   </div>
-  <div class="nav">
-    <button class="btn btnb" id="btn-prev-4">&larr; Anterior</button>
-    <button class="btn btns" id="btn-enviar">&#128228; Enviar Solicitud</button>
-  </div>
+  <div class="nav"><button class="btn btnb" id="btn-p6">&larr; Anterior</button><span class="stepof" id="sf6"></span><button class="btn btns" id="btn-enviar">&#128228; Enviar Solicitud</button></div>
 </div>
 
 <!-- SUCCESS -->
 <div class="success" id="success">
   <div class="sucico">&#127881;</div>
-  <h2>&iexcl;Solicitud Enviada!</h2>
-  <p>Hemos recibido tu solicitud. Guarda tu n&uacute;mero de folio:</p>
+  <h2>Solicitud Enviada</h2>
+  <p>Hemos recibido tu solicitud. Guarda tu folio:</p>
   <div class="folio" id="folio-num"></div>
-  <p>Recibir&aacute;s tu factura (XML + PDF) en el correo registrado en un m&aacute;ximo de <strong>4 horas h&aacute;biles</strong>.</p>
-  <div class="nextsteps">
-    <h3>&iquest;Qu&eacute; sigue?</h3>
+  <p>Recibiras tu CFDI (XML + PDF) en tu correo en un maximo de <strong>4 horas habiles</strong>.</p>
+  <div class="nxtlist">
+    <h3>Que sigue</h3>
     <ul>
       <li><span class="dot">&rarr;</span> Accepti valida tus datos fiscales en el SAT</li>
-      <li><span class="dot">&rarr;</span> Generamos el CFDI con nuestro sello digital</li>
-      <li><span class="dot">&rarr;</span> Timbramos ante el SAT a trav&eacute;s de nuestro PAC</li>
-      <li><span class="dot">&rarr;</span> Te enviamos XML + PDF a tu correo registrado</li>
+      <li><span class="dot">&rarr;</span> Calculamos impuestos segun tu perfil</li>
+      <li><span class="dot">&rarr;</span> Timbramos ante el SAT via Facturama</li>
+      <li><span class="dot">&rarr;</span> Te enviamos XML + PDF a tu correo</li>
     </ul>
   </div>
-  <p style="font-size:13px;color:var(--muted)">&#128172; WhatsApp <strong style="color:var(--navy)">(222) 864-2948</strong></p>
+  <p style="font-size:13px;color:var(--muted)">WhatsApp <strong style="color:var(--navy)">(222) 864-2948</strong></p>
 </div>
 
-</div><!-- /wrapper -->
-
-<footer>
-  &copy; 2024 <a href="https://www.accepti.com.mx" target="_blank">Accepti Contadores S.C.</a>
-  &nbsp;&middot;&nbsp; Privada 14B Sur 6703, Col. Villa Universitaria, Puebla, Pue.
-  &nbsp;&middot;&nbsp; (222) 755-0328
-</footer>
-
+</div>
+<footer>&copy; 2024 <a href="https://www.accepti.com.mx" target="_blank">Accepti Contadores S.C.</a> &middot; Privada 14B Sur 6703, Col. Villa Universitaria, Puebla, Pue. &middot; (222) 755-0328</footer>
 <script src="app.js"></script>
 </body>
 </html>
