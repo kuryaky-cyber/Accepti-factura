@@ -1,6 +1,3 @@
-
-Copiar
-
 /* ================================================================
    ACCEPTI CONTADORES — FORMULARIO CFDI 4.0
    app.js v4.0 — Completo: Factura / Complemento Pago / Carta Porte
