@@ -5,9 +5,9 @@
    Reemplaza antes de subir:
    WEBHOOK_URL -> URL del escenario de Factura en Make
 ================================================================ */
- 
+
 var WEBHOOK_URL = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
- 
+
 /* ================================================================
    FLUJOS POR TIPO DE CFDI
    factura:  1->2->3->4->6
@@ -21,7 +21,7 @@ var FLUJOS = {
   porte_i: [1,2,3,4,5,6],
   porte_t: [1,2,5,6]
 };
- 
+
 var LABELS = {
   1: 'Tipo y Emisor',
   2: 'Receptor',
@@ -30,13 +30,13 @@ var LABELS = {
   5: 'Carta Porte',
   6: 'Confirmar'
 };
- 
+
 var tipo   = '';   // tipo de CFDI seleccionado
 var flujo  = [];   // flujo activo
 var fpos   = 0;    // posicion en el flujo
 var nc     = 0;    // contador de conceptos
 var nmc    = 0;    // contador de mercancias
- 
+
 /* ================================================================
    CATALOGO SAT
 ================================================================ */
@@ -114,28 +114,31 @@ var SAT = [
   {c:"92121500",d:"Servicios gubernamentales",k:"Gobierno",u:"E48"},
   {c:"01010101",d:"No existe en catalogo SAT",k:"Otros",u:"ACT"}
 ];
- 
+
 var UNIDADES = {
   'E48':'E48 - Servicio','H87':'H87 - Pieza','KGM':'KGM - Kilogramo',
   'LTR':'LTR - Litro','MTR':'MTR - Metro','ACT':'ACT - Actividad',
   'MTS':'MTS - Metro cuadrado','TON':'TON - Tonelada',
   'XBX':'XBX - Caja','XPK':'XPK - Paquete','GRM':'GRM - Gramo'
 };
- 
+
 /* ================================================================
    INIT
 ================================================================ */
 document.addEventListener('DOMContentLoaded', function() {
   var img = document.getElementById('logo-img');
   if (img) { img.onerror = function(){ img.style.display='none'; document.getElementById('logo-fb').style.display='grid'; }; }
- 
+
   // Tipo CFDI click
   ['factura','pago','porte_i','porte_t'].forEach(function(t) {
     document.getElementById('tc-'+t).addEventListener('click', function(){ selTipo(t); });
   });
- 
+
   // Navegacion
-  document.getElementById('btn-n1').addEventListener('click', function(){ goNext(); });
+  document.getElementById('btn-n1').addEventListener('click', function(){
+    if (!tipo) { alert('Selecciona el tipo de CFDI para continuar.'); return; }
+    goNext();
+  });
   document.getElementById('btn-n2').addEventListener('click', function(){ goNext(); });
   document.getElementById('btn-n3').addEventListener('click', function(){ goNext(); });
   document.getElementById('btn-n4').addEventListener('click', function(){ goNext(); });
@@ -148,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-enviar').addEventListener('click', function(){ enviar(); });
   document.getElementById('btn-add-conc').addEventListener('click', function(){ addConc(); });
   document.getElementById('btn-add-merc').addEventListener('click', function(){ addMerc(); });
- 
+
   // Validaciones en tiempo real
   addUpper('rfc_emisor','rfc_emisor');
   addUpper('rfc_receptor','rfc_receptor');
@@ -168,30 +171,30 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('forma_pago_cp').addEventListener('change', function(){ clrE('forma_pago_cp'); });
   document.getElementById('saldo_anterior').addEventListener('input', function(){ clrE('saldo_anterior'); });
   document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
- 
+
   // Moneda tipo cambio
   document.getElementById('mon-usd').addEventListener('change', function(){ document.getElementById('f-tc').classList.remove('hide'); });
   document.getElementById('mon-mxn').addEventListener('change', function(){ document.getElementById('f-tc').classList.add('hide'); });
- 
+
   // Cerrar dropdowns SAT
   document.addEventListener('click', function(e){
     if (!e.target.closest('.satwrap')) {
       document.querySelectorAll('.satdrop.open').forEach(function(d){ d.classList.remove('open'); });
     }
   });
- 
+
   // Primer concepto y mercancia
   addConc();
   addMerc();
   renderStepbar();
 });
- 
+
 function addUpper(id, errId) {
   var el = document.getElementById(id);
   if (!el) return;
   el.addEventListener('input', function(){ this.value=this.value.toUpperCase(); if(errId) clrE(errId); });
 }
- 
+
 /* ================================================================
    SELECCION DE TIPO
 ================================================================ */
@@ -207,7 +210,7 @@ function selTipo(t) {
   document.getElementById('chk-'+t).textContent = '\u2713';
   renderStepbar();
 }
- 
+
 /* ================================================================
    BARRA DE PASOS
 ================================================================ */
@@ -229,35 +232,37 @@ function renderStepbar() {
     if (el) el.textContent = 'Paso '+cur+' de '+tot;
   }
 }
- 
+
 /* ================================================================
    NAVEGACION
 ================================================================ */
 function goNext() {
+  if (!tipo || !flujo.length) { alert('Selecciona el tipo de CFDI para continuar.'); return; }
   var curStep = flujo[fpos];
   if (!validar(curStep)) return;
   if (curStep === 1) configurarFlujo();
   fpos++;
   var nextStep = flujo[fpos];
+  if (nextStep === 6) armarResumen();
   mostrarCard(nextStep);
   renderStepbar();
   window.scrollTo({top:0,behavior:'smooth'});
 }
- 
+
 function goPrev() {
   fpos--;
   mostrarCard(flujo[fpos]);
   renderStepbar();
   window.scrollTo({top:0,behavior:'smooth'});
 }
- 
+
 function mostrarCard(n) {
   for (var i=1; i<=6; i++) {
     var c = document.getElementById('card'+i);
     if (i===n) c.classList.add('active'); else c.classList.remove('active');
   }
 }
- 
+
 function configurarFlujo() {
   // Configurar card3 segun tipo
   var secConc = document.getElementById('sec-conceptos');
@@ -265,7 +270,7 @@ function configurarFlujo() {
   var ico3    = document.getElementById('ico3');
   var t3      = document.getElementById('t3');
   var sub3    = document.getElementById('sub3');
- 
+
   if (tipo === 'pago') {
     secConc.style.display = 'none';
     secPago.style.display = 'block';
@@ -289,12 +294,13 @@ function configurarFlujo() {
     if (uso && !uso.value) uso.value = 'S01';
   }
 }
- 
+
 /* ================================================================
    VALIDACION POR PASO
 ================================================================ */
 function validar(step) {
   var ok = true;
+  if (!step) return false;
   if (step === 1) {
     if (!tipo) { alert('Selecciona el tipo de CFDI para continuar.'); return false; }
     if (g('rfc_emisor').trim().length < 12) { marcarErr('rfc_emisor'); ok=false; }
@@ -351,11 +357,11 @@ function validar(step) {
   }
   return ok;
 }
- 
+
 function marcarErr(id){ var el=document.getElementById(id); if(el)el.classList.add('err'); var em=document.getElementById('e-'+id); if(em)em.style.display='block'; }
 function clrE(id){ var el=document.getElementById(id); if(el)el.classList.remove('err'); var em=document.getElementById('e-'+id); if(em)em.style.display='none'; }
 function g(id){ var el=document.getElementById(id); return el?el.value:''; }
- 
+
 /* ================================================================
    CONCEPTOS
 ================================================================ */
@@ -399,9 +405,9 @@ function addConc() {
   div.querySelector('#cdisc'+n).addEventListener('input', recalc);
   recalc();
 }
- 
+
 function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); recalc(); }
- 
+
 function buscar(n) {
   var q=document.getElementById('ss'+n).value.toLowerCase().trim();
   var drop=document.getElementById('sd'+n);
@@ -423,7 +429,7 @@ function buscar(n) {
   });
   drop.classList.add('open');
 }
- 
+
 function selSAT(n,code,desc,unit){
   document.getElementById('sd'+n).classList.remove('open');
   document.getElementById('ss'+n).value='';
@@ -448,9 +454,9 @@ function clearSAT(n){
   document.getElementById('sm'+n).value='';
   document.getElementById('ss'+n).value='';
 }
- 
+
 function getIds(){var ids=[];document.querySelectorAll('.conc').forEach(function(r){ids.push(r.id.replace('c',''));});return ids;}
- 
+
 function recalc(){
   var sub=0,des=0;
   getIds().forEach(function(n){
@@ -464,9 +470,9 @@ function recalc(){
   document.getElementById('t-des').textContent=fmt(des);
   document.getElementById('t-neto').textContent=fmt(neto);
 }
- 
+
 function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
- 
+
 function recolectarConceptos(){
   var conceptos=[];
   getIds().forEach(function(n){
@@ -491,7 +497,7 @@ function recolectarConceptos(){
   });
   return conceptos;
 }
- 
+
 /* ================================================================
    MERCANCIAS (CARTA PORTE)
 ================================================================ */
@@ -516,7 +522,7 @@ function addMerc() {
   document.getElementById('merc-list').appendChild(div);
   div.querySelector('.btnrm').addEventListener('click', function(){ var el=document.getElementById('m'+this.dataset.n); if(el)el.remove(); });
 }
- 
+
 function recolectarMercancias(){
   var mercs=[];
   document.querySelectorAll('.merc').forEach(function(row){
@@ -532,7 +538,7 @@ function recolectarMercancias(){
   });
   return mercs;
 }
- 
+
 /* ================================================================
    RESUMEN
 ================================================================ */
@@ -571,7 +577,7 @@ function armarResumen(){
   });
   document.getElementById('resumen').innerHTML=html;
 }
- 
+
 /* ================================================================
    ENVIAR
 ================================================================ */
@@ -581,7 +587,7 @@ function enviar(){
   var mp=document.querySelector('input[name=metodo]:checked');
   var mon=document.querySelector('input[name=moneda]:checked');
   var moncp=document.querySelector('input[name=mon_cp]:checked');
- 
+
   var data={
     folio:folio,
     timestamp:new Date().toISOString(),
@@ -598,7 +604,7 @@ function enviar(){
       email:g('email_receptor')
     }
   };
- 
+
   if(tipo==='pago'){
     /* Complemento de Pago 2.0 */
     var saldoAnt=parseFloat(g('saldo_anterior'))||0;
@@ -648,7 +654,7 @@ function enviar(){
       };
     }
   }
- 
+
   /* Carta Porte */
   if(tipo==='porte_i'||tipo==='porte_t'){
     var tiTransp=document.querySelector('input[name=transp_int]:checked');
@@ -685,10 +691,10 @@ function enviar(){
       }
     };
   }
- 
+
   fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
     .catch(function(){console.warn('Webhook no configurado aun');});
- 
+
   for(var i=1;i<=6;i++) document.getElementById('card'+i).classList.remove('active');
   document.getElementById('success').classList.add('active');
   document.getElementById('folio-num').textContent=folio;
