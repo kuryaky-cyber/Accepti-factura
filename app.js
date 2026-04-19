@@ -17,9 +17,7 @@ var WEBHOOK_URL = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
 ================================================================ */
 var FLUJOS = {
   factura: [1,2,3,4,6],
-  pago:    [1,2,3,6],
-  porte_i: [1,2,3,4,5,6],
-  porte_t: [1,2,5,6]
+  pago:    [1,2,3,6]
 };
 
 var LABELS = {
@@ -130,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (img) { img.onerror = function(){ img.style.display='none'; document.getElementById('logo-fb').style.display='grid'; }; }
 
   // Tipo CFDI click
-  ['factura','pago','porte_i','porte_t'].forEach(function(t) {
+  ['factura','pago'].forEach(function(t) {
     document.getElementById('tc-'+t).addEventListener('click', function(){ selTipo(t); });
   });
 
@@ -202,7 +200,7 @@ function selTipo(t) {
   tipo = t;
   flujo = FLUJOS[t];
   fpos = 0;
-  ['factura','pago','porte_i','porte_t'].forEach(function(x){
+  ['factura','pago'].forEach(function(x){
     document.getElementById('tc-'+x).classList.remove('sel');
     document.getElementById('chk-'+x).textContent = '';
   });
@@ -543,7 +541,7 @@ function recolectarMercancias(){
    RESUMEN
 ================================================================ */
 function armarResumen(){
-  var nombres={factura:'Factura de Ingreso',pago:'Complemento de Pago',porte_i:'Carta Porte - Ingreso',porte_t:'Carta Porte - Traslado'};
+  var nombres={factura:'Factura de Ingreso',pago:'Complemento de Pago'};
   var mp=document.querySelector('input[name=metodo]:checked');
   var mon=document.querySelector('input[name=moneda]:checked');
   var rows=[
