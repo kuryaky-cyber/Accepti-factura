@@ -67,15 +67,13 @@ select{cursor:pointer}
 .pl{padding:7px 14px;border-radius:4px;border:1.5px solid var(--border);font-size:12px;font-weight:600;font-family:'Montserrat',sans-serif;cursor:pointer;transition:all .2s;color:var(--muted);user-select:none}
 .pr:checked+.pl{background:var(--teal);border-color:var(--teal);color:#fff}
 /* Tipo CFDI cards */
-.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 26px}
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 26px;max-width:520px}
 .tipo-card{border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;display:flex;gap:12px;align-items:flex-start;background:var(--field)}
 .tipo-card:hover{border-color:var(--teal);background:var(--lite)}
 .tipo-card.sel{border-color:var(--teal);background:var(--lite);box-shadow:0 0 0 3px rgba(0,169,157,.1)}
 .tipo-ico{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .tc-factura .tipo-ico{background:#EDF4FF;color:var(--blue)}
 .tc-pago    .tipo-ico{background:#EDFFF5;color:var(--green)}
-.tc-porte_i .tipo-ico{background:#FFF8ED;color:var(--yellow)}
-.tc-porte_t .tipo-ico{background:#FFF0EE;color:var(--coral)}
 .tipo-t{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--navy)}
 .tipo-d{font-size:11px;color:var(--muted);margin-top:3px}
 .tipo-chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .2s}
@@ -199,7 +197,7 @@ footer a{color:var(--teal);text-decoration:none}
 <div class="hero">
   <div>
     <h2>Solicitud de Comprobante Fiscal (CFDI 4.0)</h2>
-    <p>Factura de Ingreso &middot; Complemento de Pago &middot; Carta Porte 3.1</p>
+    <p>Factura de Ingreso &middot; Complemento de Pago</p>
   </div>
   <div class="cpill">SAT &middot; CFDI 4.0</div>
 </div>
@@ -222,16 +220,7 @@ footer a{color:var(--teal);text-decoration:none}
       <div><div class="tipo-t">Complemento de Pago</div><div class="tipo-d">Para liquidar facturas emitidas con metodo PPD</div></div>
       <div class="tipo-chk" id="chk-pago"></div>
     </div>
-    <div class="tipo-card tc-porte_i" id="tc-porte_i">
-      <div class="tipo-ico">&#128666;</div>
-      <div><div class="tipo-t">Carta Porte &mdash; Ingreso</div><div class="tipo-d">Transporte de mercancias con cobro al cliente</div></div>
-      <div class="tipo-chk" id="chk-porte_i"></div>
-    </div>
-    <div class="tipo-card tc-porte_t" id="tc-porte_t">
-      <div class="tipo-ico">&#128665;</div>
-      <div><div class="tipo-t">Carta Porte &mdash; Traslado</div><div class="tipo-d">Traslado propio sin cobro (factura en ceros)</div></div>
-      <div class="tipo-chk" id="chk-porte_t"></div>
-    </div>
+
   </div>
   <div class="fields">
     <div class="f">
