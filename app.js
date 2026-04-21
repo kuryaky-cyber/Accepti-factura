@@ -351,7 +351,7 @@ function addConc() {
         '<div class="satmanual"><span>O clave manual:</span><input type="text" id="sm'+n+'" placeholder="84111506" maxlength="8"></div>'+
       '</div>'+
       '<div class="satsel" id="ssel'+n+'"><strong id="sco'+n+'"></strong><span id="sde'+n+'"></span><button class="satclr" data-n="'+n+'">&times;</button></div>'+
-      '<a href="https://pys.sat.gob.mx/PyS/catPyS.aspx" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
+      '<a href="https://wwwmat.sat.gob.mx/consultas/53693/catalogo-de-productos-y-servicios" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
     '</div>'+
     '<div class="cgrid">'+
       '<div class="f"><label>Cantidad</label><input type="number" id="ccant'+n+'" value="1" min="0.001" step="0.001"></div>'+
