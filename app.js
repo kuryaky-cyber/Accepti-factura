@@ -375,7 +375,7 @@ function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); re
 /* Proxy Cloudflare Worker — catalogo SAT via Facturama
    URL del worker: https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev
    Cambia WORKER_URL despues de hacer el deploy del worker */
-var WORKER_URL = 'https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev';
+var WORKER_URL = 'http://accepti.kuryaky.workers.dev';
 var FAC_TIMERS = {};
 
 function buscar(n) {
