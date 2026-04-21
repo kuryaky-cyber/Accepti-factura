@@ -375,7 +375,7 @@ function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); re
 /* Proxy Cloudflare Worker — catalogo SAT via Facturama
    URL del worker: https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev
    Cambia WORKER_URL despues de hacer el deploy del worker */
-var WORKER_URL = 'https://accepti.kuryaky.workers.dev/';
+var WORKER_URL = 'https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev';
 var FAC_TIMERS = {};
 
 function buscar(n) {
@@ -565,10 +565,14 @@ function enviar(){
   var mon=document.querySelector('input[name=moneda]:checked');
   var moncp=document.querySelector('input[name=mon_cp]:checked');
 
+  /* Captura numero WhatsApp del parametro ?wa= en la URL */
+  var waNum = new URLSearchParams(window.location.search).get('wa') || '';
+
   var data={
     folio:folio,
     timestamp:new Date().toISOString(),
     tipo_cfdi:tipo,
+    whatsapp:waNum,
     emisor:{rfc:g('rfc_emisor'), email:g('email_emisor')},
     receptor:{
       rfc:g('rfc_receptor'),
