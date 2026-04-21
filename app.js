@@ -1,6 +1,6 @@
 /* ================================================================
    ACCEPTI CONTADORES — FORMULARIO CFDI 4.0
-   app.js v4.0 — Completo: Factura / Complemento Pago / Carta Porte
+   app.js v5.0 — Factura de Ingreso / Complemento de Pago
    
    Reemplaza antes de subir:
    WEBHOOK_URL -> URL del escenario de Factura en Make
@@ -8,16 +8,9 @@
 
 var WEBHOOK_URL = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
 
-/* ================================================================
-   FLUJOS POR TIPO DE CFDI
-   factura:  1->2->3->4->6
-   pago:     1->2->3->6
-   porte_i:  1->2->3->4->5->6
-   porte_t:  1->2->5->6
-================================================================ */
 var FLUJOS = {
-  factura: [1,2,3,4,6],
-  pago:    [1,2,3,6]
+  factura: [1,2,3,4,5],
+  pago:    [1,2,3,5]
 };
 
 var LABELS = {
@@ -25,15 +18,13 @@ var LABELS = {
   2: 'Receptor',
   3: 'Conceptos / Pago',
   4: 'Forma de Pago',
-  5: 'Carta Porte',
-  6: 'Confirmar'
+  5: 'Confirmar'
 };
 
-var tipo   = '';   // tipo de CFDI seleccionado
-var flujo  = [];   // flujo activo
-var fpos   = 0;    // posicion en el flujo
-var nc     = 0;    // contador de conceptos
-var nmc    = 0;    // contador de mercancias
+var tipo  = '';
+var flujo = [];
+var fpos  = 0;
+var nc    = 0;
 
 /* ================================================================
    CATALOGO SAT
@@ -127,12 +118,10 @@ document.addEventListener('DOMContentLoaded', function() {
   var img = document.getElementById('logo-img');
   if (img) { img.onerror = function(){ img.style.display='none'; document.getElementById('logo-fb').style.display='grid'; }; }
 
-  // Tipo CFDI click
   ['factura','pago'].forEach(function(t) {
     document.getElementById('tc-'+t).addEventListener('click', function(){ selTipo(t); });
   });
 
-  // Navegacion
   document.getElementById('btn-n1').addEventListener('click', function(){
     if (!tipo) { alert('Selecciona el tipo de CFDI para continuar.'); return; }
     goNext();
@@ -140,24 +129,17 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-n2').addEventListener('click', function(){ goNext(); });
   document.getElementById('btn-n3').addEventListener('click', function(){ goNext(); });
   document.getElementById('btn-n4').addEventListener('click', function(){ goNext(); });
-  document.getElementById('btn-n5').addEventListener('click', function(){ goNext(); });
   document.getElementById('btn-p2').addEventListener('click', function(){ goPrev(); });
   document.getElementById('btn-p3').addEventListener('click', function(){ goPrev(); });
   document.getElementById('btn-p4').addEventListener('click', function(){ goPrev(); });
   document.getElementById('btn-p5').addEventListener('click', function(){ goPrev(); });
-  document.getElementById('btn-p6').addEventListener('click', function(){ goPrev(); });
   document.getElementById('btn-enviar').addEventListener('click', function(){ enviar(); });
   document.getElementById('btn-add-conc').addEventListener('click', function(){ addConc(); });
-  document.getElementById('btn-add-merc').addEventListener('click', function(){ addMerc(); });
 
-  // Validaciones en tiempo real
   addUpper('rfc_emisor','rfc_emisor');
   addUpper('rfc_receptor','rfc_receptor');
   addUpper('nombre_receptor','nombre_receptor');
-  addUpper('cp_rfc_origen','cp_rfc_origen');
-  addUpper('cp_rfc_destino','cp_rfc_destino');
-  addUpper('cp_rfc_op','cp_rfc_op');
-  addUpper('cp_placa','cp_placa');
+
   document.getElementById('email_emisor').addEventListener('input', function(){ clrE('email_emisor'); });
   document.getElementById('cp_receptor').addEventListener('input', function(){ clrE('cp_receptor'); });
   document.getElementById('regimen_receptor').addEventListener('change', function(){ clrE('regimen_receptor'); });
@@ -166,31 +148,33 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('uuid_origen').addEventListener('input', function(){ this.value=this.value.toUpperCase(); clrE('uuid_origen'); });
   document.getElementById('monto_pago').addEventListener('input', function(){ clrE('monto_pago'); });
   document.getElementById('fecha_pago').addEventListener('input', function(){ clrE('fecha_pago'); });
-  document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
-  document.querySelectorAll('input[name=metodo]').forEach(function(r){
-  r.addEventListener('change',function(){
-    var fp=document.getElementById('forma_pago');
-    if(this.value==='PPD'){fp.value='99';fp.disabled=true;}
-    else{fp.disabled=false;}
-  });
-});
+  document.getElementById('forma_pago_cp').addEventListener('change', function(){ clrE('forma_pago_cp'); });
   document.getElementById('saldo_anterior').addEventListener('input', function(){ clrE('saldo_anterior'); });
   document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
 
-  // Moneda tipo cambio
+  // PPD -> fuerza forma de pago 99
+  document.querySelectorAll('input[name=metodo]').forEach(function(r){
+    r.addEventListener('change', function(){
+      var fp = document.getElementById('forma_pago');
+      if (this.value === 'PPD') {
+        fp.value = '99';
+        fp.disabled = true;
+      } else {
+        fp.disabled = false;
+      }
+    });
+  });
+
   document.getElementById('mon-usd').addEventListener('change', function(){ document.getElementById('f-tc').classList.remove('hide'); });
   document.getElementById('mon-mxn').addEventListener('change', function(){ document.getElementById('f-tc').classList.add('hide'); });
 
-  // Cerrar dropdowns SAT
   document.addEventListener('click', function(e){
     if (!e.target.closest('.satwrap')) {
       document.querySelectorAll('.satdrop.open').forEach(function(d){ d.classList.remove('open'); });
     }
   });
 
-  // Primer concepto y mercancia
   addConc();
-  addMerc();
   renderStepbar();
 });
 
@@ -230,9 +214,8 @@ function renderStepbar() {
     if (i < flujo.length-1) html += '<div class="sarrow">&rsaquo;</div>';
   }
   bar.innerHTML = html;
-  // Actualizar stepof
   var cur = fpos+1, tot = flujo.length;
-  for (var j=1; j<=6; j++) {
+  for (var j=1; j<=5; j++) {
     var el = document.getElementById('sf'+j);
     if (el) el.textContent = 'Paso '+cur+' de '+tot;
   }
@@ -248,7 +231,7 @@ function goNext() {
   if (curStep === 1) configurarFlujo();
   fpos++;
   var nextStep = flujo[fpos];
-  if (nextStep === 6) armarResumen();
+  if (nextStep === 5) armarResumen();
   mostrarCard(nextStep);
   renderStepbar();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -262,14 +245,13 @@ function goPrev() {
 }
 
 function mostrarCard(n) {
-  for (var i=1; i<=6; i++) {
+  for (var i=1; i<=5; i++) {
     var c = document.getElementById('card'+i);
-    if (i===n) c.classList.add('active'); else c.classList.remove('active');
+    if (c) { if (i===n) c.classList.add('active'); else c.classList.remove('active'); }
   }
 }
 
 function configurarFlujo() {
-  // Configurar card3 segun tipo
   var secConc = document.getElementById('sec-conceptos');
   var secPago = document.getElementById('sec-pago');
   var ico3    = document.getElementById('ico3');
@@ -285,23 +267,13 @@ function configurarFlujo() {
   } else {
     secConc.style.display = 'block';
     secPago.style.display = 'none';
-    if (tipo === 'porte_i') {
-      t3.textContent  = 'Conceptos del Servicio de Transporte';
-      sub3.textContent= 'Describe el servicio de transporte que se cobra';
-    } else {
-      t3.textContent  = 'Conceptos de la Factura';
-      sub3.textContent= 'Agrega los productos o servicios. Puedes agregar multiples conceptos.';
-    }
-  }
-  // Para carta porte traslado: auto-completar receptor CP01
-  if (tipo === 'porte_t') {
-    var uso = document.getElementById('uso_cfdi');
-    if (uso && !uso.value) uso.value = 'S01';
+    t3.textContent  = 'Conceptos de la Factura';
+    sub3.textContent= 'Agrega los productos o servicios. Puedes agregar multiples conceptos.';
   }
 }
 
 /* ================================================================
-   VALIDACION POR PASO
+   VALIDACION
 ================================================================ */
 function validar(step) {
   var ok = true;
@@ -338,20 +310,6 @@ function validar(step) {
     if (!g('forma_pago')) { marcarErr('forma_pago'); ok=false; }
   }
   if (step === 5) {
-    // Carta porte validaciones
-    var campos5 = ['cp_rfc_origen','cp_cp_origen','cp_est_origen','cp_mun_origen','cp_fecha_salida',
-                   'cp_rfc_destino','cp_cp_destino','cp_est_destino','cp_mun_destino','cp_fecha_llegada',
-                   'cp_distancia','cp_num_perm','cp_placa','cp_anio','cp_aseg','cp_poliza',
-                   'cp_rfc_op','cp_nom_op','cp_licencia'];
-    campos5.forEach(function(id){
-      var v = g(id);
-      if (!v || v.trim().length === 0) { marcarErr(id); ok=false; }
-    });
-    if (document.querySelectorAll('.merc').length === 0) {
-      alert('Agrega al menos una mercancia para continuar.'); return false;
-    }
-  }
-  if (step === 6) {
     if (!document.getElementById('acepto').checked) {
       alert('Debes aceptar los terminos para continuar.'); return false;
     }
@@ -393,6 +351,7 @@ function addConc() {
         '<div class="satmanual"><span>O clave manual:</span><input type="text" id="sm'+n+'" placeholder="84111506" maxlength="8"></div>'+
       '</div>'+
       '<div class="satsel" id="ssel'+n+'"><strong id="sco'+n+'"></strong><span id="sde'+n+'"></span><button class="satclr" data-n="'+n+'">&times;</button></div>'+
+      '<a href="https://pys.sat.gob.mx/PyS/catPyS.aspx" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
     '</div>'+
     '<div class="cgrid">'+
       '<div class="f"><label>Cantidad</label><input type="number" id="ccant'+n+'" value="1" min="0.001" step="0.001"></div>'+
@@ -424,7 +383,7 @@ function buscar(n) {
       hits.push(it); if(hits.length>=12)break;
     }
   }
-  if(!hits.length){drop.innerHTML='<div class="nores">Sin resultados, escribe la clave manualmente</div>';drop.classList.add('open');return;}
+  if(!hits.length){drop.innerHTML='<div class="nores">Sin resultados — usa el link del catalogo SAT abajo</div>';drop.classList.add('open');return;}
   drop.innerHTML='';
   hits.forEach(function(item){
     var row=document.createElement('div'); row.className='satitem';
@@ -504,47 +463,6 @@ function recolectarConceptos(){
 }
 
 /* ================================================================
-   MERCANCIAS (CARTA PORTE)
-================================================================ */
-function addMerc() {
-  nmc++;
-  var n = nmc;
-  var div = document.createElement('div');
-  div.className='merc'; div.id='m'+n;
-  div.innerHTML=
-    '<div class="chead2">'+
-      '<span class="cnum">Mercancia '+n+'</span>'+
-      '<button class="btnrm" data-n="'+n+'">&times;</button>'+
-    '</div>'+
-    '<div class="mgrid">'+
-      '<div class="f"><label>Descripcion <span class="r">*</span></label><input type="text" id="mdesc'+n+'" placeholder="Descripcion de la mercancia"></div>'+
-      '<div class="f"><label>Clave SAT Bienes Transp. <span class="r">*</span></label><input type="text" id="mclv'+n+'" placeholder="Clave SAT (ej. 78101800)" maxlength="10"></div>'+
-      '<div class="f"><label>Clave Unidad SAT</label><select id="munit'+n+'"><option value="KGM">KGM - Kilogramo</option><option value="H87">H87 - Pieza</option><option value="XBX">XBX - Caja</option><option value="LTR">LTR - Litro</option><option value="MTR">MTR - Metro</option><option value="TON">TON - Tonelada</option></select></div>'+
-      '<div class="f"><label>Cantidad <span class="r">*</span></label><input type="number" id="mcant'+n+'" placeholder="1" min="0.001" step="0.001"></div>'+
-      '<div class="f"><label>Peso en KG <span class="r">*</span></label><input type="number" id="mpeso'+n+'" placeholder="10.5" min="0.001" step="0.001"></div>'+
-      '<div class="f"><label>Material Peligroso</label><select id="mmp'+n+'"><option value="No">No</option><option value="Si">Si</option></select></div>'+
-    '</div>';
-  document.getElementById('merc-list').appendChild(div);
-  div.querySelector('.btnrm').addEventListener('click', function(){ var el=document.getElementById('m'+this.dataset.n); if(el)el.remove(); });
-}
-
-function recolectarMercancias(){
-  var mercs=[];
-  document.querySelectorAll('.merc').forEach(function(row){
-    var n=row.id.replace('m','');
-    mercs.push({
-      descripcion: g('mdesc'+n),
-      clave_sat:   g('mclv'+n),
-      clave_unidad:g('munit'+n),
-      cantidad:    parseFloat(g('mcant'+n))||0,
-      peso_kg:     parseFloat(g('mpeso'+n))||0,
-      material_peligroso: g('mmp'+n)||'No'
-    });
-  });
-  return mercs;
-}
-
-/* ================================================================
    RESUMEN
 ================================================================ */
 function armarResumen(){
@@ -565,20 +483,12 @@ function armarResumen(){
   } else {
     rows.push({l:'Conceptos',v:document.querySelectorAll('.conc').length+' concepto(s)'});
     rows.push({l:'Subtotal',v:document.getElementById('t-neto').textContent,big:true,full:true});
-    if(tipo!=='porte_t'){
-      rows.push({l:'Metodo de Pago',v:mp?mp.value:''},{l:'Forma de Pago',v:g('forma_pago')});
-      rows.push({l:'Moneda',v:mon?mon.value:'MXN'});
-    }
-  }
-  if(tipo==='porte_i'||tipo==='porte_t'){
-    rows.push({l:'Origen',v:g('cp_mun_origen')+', '+g('cp_est_origen')});
-    rows.push({l:'Destino',v:g('cp_mun_destino')+', '+g('cp_est_destino')});
-    rows.push({l:'Vehiculo',v:g('cp_placa')+' / '+g('cp_config_veh')});
-    rows.push({l:'Operador',v:g('cp_nom_op')});
+    rows.push({l:'Metodo de Pago',v:mp?mp.value:''},{l:'Forma de Pago',v:g('forma_pago')});
+    rows.push({l:'Moneda',v:mon?mon.value:'MXN'});
   }
   var html='';
   rows.forEach(function(d){
-    html+='<div class="ri'+(d.full?' full':'')+'"><div class="ril">'+d.l+'</div><div class="riv'+(d.big?' big':'')+'">'+( d.v||'\u2014')+'</div></div>';
+    html+='<div class="ri'+(d.full?' full':'')+'"><div class="ril">'+d.l+'</div><div class="riv'+(d.big?' big':'')+'">'+(d.v||'\u2014')+'</div></div>';
   });
   document.getElementById('resumen').innerHTML=html;
 }
@@ -597,9 +507,7 @@ function enviar(){
     folio:folio,
     timestamp:new Date().toISOString(),
     tipo_cfdi:tipo,
-    /* Emisor: Make busca en catalogo de clientes por este RFC */
     emisor:{rfc:g('rfc_emisor'), email:g('email_emisor')},
-    /* Receptor: datos completos para el CFDI 4.0 */
     receptor:{
       rfc:g('rfc_receptor'),
       nombre:g('nombre_receptor'),
@@ -611,7 +519,6 @@ function enviar(){
   };
 
   if(tipo==='pago'){
-    /* Complemento de Pago 2.0 */
     var saldoAnt=parseFloat(g('saldo_anterior'))||0;
     var montoPag=parseFloat(g('monto_pago'))||0;
     data.complemento_pago={
@@ -632,75 +539,26 @@ function enviar(){
       }]
     };
   } else {
-    /* Factura normal / Carta Porte */
-    var conceptos = recolectarConceptos();
-    if(tipo==='porte_t'){
-      /* Traslado: item en ceros requerido por SAT */
-      conceptos=[{
-        descripcion:'Servicio de traslado de mercancias',
-        clave_sat:'78101800',clave_unidad:'E48',unidad_nombre:'E48 - Servicio',
-        cantidad:1,precio_unitario:0,descuento_pct:0,descuento_monto:0,importe:0
-      }];
-    }
-    data.conceptos=conceptos;
+    data.conceptos=recolectarConceptos();
     data.totales={
       subtotal:document.getElementById('t-sub').textContent,
       descuento:document.getElementById('t-des').textContent,
       neto:document.getElementById('t-neto').textContent
     };
-    if(tipo!=='porte_t'){
-      data.pago={
-        metodo:mp?mp.value:'PUE',
-        forma:g('forma_pago'),
-        moneda:mon?mon.value:'MXN',
-        tipo_cambio:g('tipo_cambio'),
-        referencia:g('referencia'),
-        notas:g('notas')
-      };
-    }
-  }
-
-  /* Carta Porte */
-  if(tipo==='porte_i'||tipo==='porte_t'){
-    var tiTransp=document.querySelector('input[name=transp_int]:checked');
-    data.carta_porte={
-      transp_internac:tiTransp?tiTransp.value:'No',
-      origen:{
-        rfc:g('cp_rfc_origen'),cp:g('cp_cp_origen'),
-        estado:g('cp_est_origen'),municipio:g('cp_mun_origen'),
-        fecha_hora_salida:g('cp_fecha_salida')
-      },
-      destino:{
-        rfc:g('cp_rfc_destino'),cp:g('cp_cp_destino'),
-        estado:g('cp_est_destino'),municipio:g('cp_mun_destino'),
-        fecha_hora_llegada:g('cp_fecha_llegada'),
-        distancia_km:g('cp_distancia')
-      },
-      mercancias:recolectarMercancias(),
-      unidad_peso:'KGM',
-      vehiculo:{
-        perm_sct:g('cp_perm_sct'),
-        num_permiso:g('cp_num_perm'),
-        config_vehicular:g('cp_config_veh'),
-        placa:g('cp_placa'),
-        anio:g('cp_anio'),
-        peso_bruto:g('cp_peso_v'),
-        aseguradora:g('cp_aseg'),
-        poliza_resp_civil:g('cp_poliza')
-      },
-      operador:{
-        tipo_figura:'01',
-        rfc:g('cp_rfc_op'),
-        nombre:g('cp_nom_op'),
-        num_licencia:g('cp_licencia')
-      }
+    data.pago={
+      metodo:mp?mp.value:'PUE',
+      forma:g('forma_pago'),
+      moneda:mon?mon.value:'MXN',
+      tipo_cambio:g('tipo_cambio'),
+      referencia:g('referencia'),
+      notas:g('notas')
     };
   }
 
   fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
     .catch(function(){console.warn('Webhook no configurado aun');});
 
-  for(var i=1;i<=6;i++) document.getElementById('card'+i).classList.remove('active');
+  for(var i=1;i<=5;i++){ var c=document.getElementById('card'+i); if(c)c.classList.remove('active'); }
   document.getElementById('success').classList.add('active');
   document.getElementById('folio-num').textContent=folio;
   window.scrollTo({top:0,behavior:'smooth'});
