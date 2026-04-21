@@ -166,7 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('uuid_origen').addEventListener('input', function(){ this.value=this.value.toUpperCase(); clrE('uuid_origen'); });
   document.getElementById('monto_pago').addEventListener('input', function(){ clrE('monto_pago'); });
   document.getElementById('fecha_pago').addEventListener('input', function(){ clrE('fecha_pago'); });
-  document.getElementById('forma_pago_cp').addEventListener('change', function(){ clrE('forma_pago_cp'); });
+  document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
+  document.querySelectorAll('input[name=metodo]').forEach(function(r){
+  r.addEventListener('change',function(){
+    var fp=document.getElementById('forma_pago');
+    if(this.value==='PPD'){fp.value='99';fp.disabled=true;}
+    else{fp.disabled=false;}
+  });
+});
   document.getElementById('saldo_anterior').addEventListener('input', function(){ clrE('saldo_anterior'); });
   document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
 
