@@ -557,7 +557,7 @@ function armarResumen(){
     rows.push({l:'Parcialidad No.',v:g('num_parcialidad')},{l:'Saldo Anterior',v:'$'+parseFloat(g('saldo_anterior')||0).toFixed(2)});
   } else {
     rows.push({l:'Conceptos',v:document.querySelectorAll('.conc').length+' concepto(s)'});
-    rows.push({l:'Importe Neto',v:document.getElementById('t-neto').textContent,big:true,full:true});
+    rows.push({l:'Subtotal',v:document.getElementById('t-neto').textContent,big:true,full:true});
     if(tipo!=='porte_t'){
       rows.push({l:'Metodo de Pago',v:mp?mp.value:''},{l:'Forma de Pago',v:g('forma_pago')});
       rows.push({l:'Moneda',v:mon?mon.value:'MXN'});
