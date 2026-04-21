@@ -351,7 +351,7 @@ function addConc() {
         '<div class="satmanual"><span>O clave manual:</span><input type="text" id="sm'+n+'" placeholder="84111506" maxlength="8"></div>'+
       '</div>'+
       '<div class="satsel" id="ssel'+n+'"><strong id="sco'+n+'"></strong><span id="sde'+n+'"></span><button class="satclr" data-n="'+n+'">&times;</button></div>'+
-      '<a href="https://wwwmat.sat.gob.mx/consultas/53693/catalogo-de-productos-y-servicios" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
+      '<a href="https://pys.sat.gob.mx/PyS/catPyS.aspx" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
     '</div>'+
     '<div class="cgrid">'+
       '<div class="f"><label>Cantidad</label><input type="number" id="ccant'+n+'" value="1" min="0.001" step="0.001"></div>'+
@@ -372,25 +372,87 @@ function addConc() {
 
 function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); recalc(); }
 
+/* Credencial Facturama para busqueda de catalogo SAT */
+var FAC_TOKEN = 'Basic ' + btoa('huguinsf:cis2005');
+var FAC_TIMERS = {};
+
 function buscar(n) {
-  var q=document.getElementById('ss'+n).value.toLowerCase().trim();
-  var drop=document.getElementById('sd'+n);
-  if(q.length<2){drop.classList.remove('open');return;}
-  var hits=[];
-  for(var i=0;i<SAT.length;i++){
-    var it=SAT[i];
-    if(it.d.toLowerCase().indexOf(q)>=0||it.c.indexOf(q)>=0||it.k.toLowerCase().indexOf(q)>=0){
-      hits.push(it); if(hits.length>=12)break;
+  var q = document.getElementById('ss'+n).value.trim();
+  var drop = document.getElementById('sd'+n);
+  if (q.length < 2) { drop.classList.remove('open'); return; }
+
+  /* Debounce: espera 350ms antes de llamar la API */
+  clearTimeout(FAC_TIMERS[n]);
+  FAC_TIMERS[n] = setTimeout(function() { buscarAPI(n, q); }, 350);
+}
+
+function buscarAPI(n, q) {
+  var drop = document.getElementById('sd'+n);
+  drop.innerHTML = '<div class="nores">&#128269; Buscando...</div>';
+  drop.classList.add('open');
+
+  /* Primero busca en catalogo local (respuesta inmediata) */
+  var local = [];
+  for (var i = 0; i < SAT.length; i++) {
+    var it = SAT[i];
+    if (it.d.toLowerCase().indexOf(q.toLowerCase()) >= 0 || it.c.indexOf(q) >= 0) {
+      local.push(it); if (local.length >= 5) break;
     }
   }
-  if(!hits.length){drop.innerHTML='<div class="nores">Sin resultados — usa el link del catalogo SAT abajo</div>';drop.classList.add('open');return;}
-  drop.innerHTML='';
-  hits.forEach(function(item){
-    var row=document.createElement('div'); row.className='satitem';
-    row.innerHTML='<span class="satcode">'+item.c+'</span><span>'+item.d+'<br><span class="satcat">'+item.k+'</span></span>';
-    row.addEventListener('click',function(e){e.stopPropagation();selSAT(n,item.c,item.d,item.u);});
+
+  /* Luego consulta Facturama API para resultados completos */
+  fetch('https://apisandbox.facturama.mx/catalogs/ProductsOrServices?keyword=' + encodeURIComponent(q), {
+    headers: { 'Authorization': FAC_TOKEN }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    drop.innerHTML = '';
+    if (!data || !data.length) {
+      if (!local.length) {
+        drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente o consulta el catalogo del SAT.</div>';
+      } else {
+        renderResultados(n, local, drop);
+      }
+      return;
+    }
+    /* Combina: primero locales (mas rapidos), luego API sin duplicados */
+    var vistos = {};
+    var combinados = [];
+    local.forEach(function(x){ if(!vistos[x.c]){ vistos[x.c]=true; combinados.push({c:x.c,d:x.d,u:x.u}); } });
+    data.slice(0, 15).forEach(function(x){
+      if (!vistos[x.Value]) {
+        vistos[x.Value] = true;
+        combinados.push({ c: x.Value, d: x.Name, u: 'E48' });
+      }
+    });
+    renderResultados(n, combinados, drop);
+  })
+  .catch(function(){
+    /* Si falla la API usa solo el catalogo local */
+    drop.innerHTML = '';
+    if (local.length) {
+      renderResultados(n, local, drop);
+    } else {
+      drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
+    }
+  });
+}
+
+function renderResultados(n, items, drop) {
+  drop.innerHTML = '';
+  items.forEach(function(item){
+    var row = document.createElement('div');
+    row.className = 'satitem';
+    row.innerHTML = '<span class="satcode">'+item.c+'</span><span>'+item.d+'</span>';
+    row.addEventListener('click', function(e){
+      e.stopPropagation();
+      selSAT(n, item.c, item.d, item.u || 'E48');
+    });
     drop.appendChild(row);
   });
+  if (items.length === 0) {
+    drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
+  }
   drop.classList.add('open');
 }
 
