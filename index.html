@@ -56,6 +56,7 @@ input.err,select.err{border-color:var(--red)!important}
 input::placeholder,textarea::placeholder{color:#C5D0DC;font-style:italic}
 select{cursor:pointer}
 .hint{font-size:11px;color:var(--muted)}
+.hint-link{font-size:11px;color:var(--teal);text-decoration:underline;cursor:pointer}
 .emsg{font-size:11px;color:var(--red);display:none;font-weight:600}
 .pfx{display:flex;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;background:var(--field);transition:border-color .2s,box-shadow .2s}
 .pfx:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,169,157,.1)}
@@ -66,7 +67,6 @@ select{cursor:pointer}
 .pr{display:none}
 .pl{padding:7px 14px;border-radius:4px;border:1.5px solid var(--border);font-size:12px;font-weight:600;font-family:'Montserrat',sans-serif;cursor:pointer;transition:all .2s;color:var(--muted);user-select:none}
 .pr:checked+.pl{background:var(--teal);border-color:var(--teal);color:#fff}
-/* Tipo CFDI cards */
 .tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px 26px;max-width:520px}
 .tipo-card{border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;display:flex;gap:12px;align-items:flex-start;background:var(--field)}
 .tipo-card:hover{border-color:var(--teal);background:var(--lite)}
@@ -78,7 +78,6 @@ select{cursor:pointer}
 .tipo-d{font-size:11px;color:var(--muted);margin-top:3px}
 .tipo-chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .2s}
 .tipo-card.sel .tipo-chk{background:var(--teal);border-color:var(--teal);color:#fff}
-/* Conceptos */
 .concs{padding:0 26px 14px}
 .conc{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;animation:fadeup .25s ease}
 .chead2{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -104,37 +103,29 @@ select{cursor:pointer}
 .satsel strong{font-family:monospace;font-weight:700}
 .satclr{margin-left:auto;cursor:pointer;color:var(--muted);font-size:16px;background:none;border:none;padding:0 3px}
 .nores{padding:10px 14px;font-size:12px;color:var(--muted);font-style:italic;text-align:center}
+.sat-catalogo-link{display:inline-block;margin-top:6px;font-size:11px;color:var(--teal);text-decoration:underline;cursor:pointer}
 .cgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
 .cgrid .f label{font-size:10px}
 .cgrid input,.cgrid select{padding:8px 10px;font-size:13px}
 .cgrid .pfxl{padding:8px 9px;font-size:12px}
 .btnadd{display:block;width:100%;background:transparent;border:2px dashed var(--teal);color:var(--teal2);border-radius:8px;padding:10px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .btnadd:hover{background:var(--lite)}
-/* Totales */
 .totbox{margin:0 26px 20px;background:var(--navy);border-radius:8px;padding:14px 18px;color:#fff}
 .trow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:rgba(255,255,255,.6)}
 .trow span:last-child{color:rgba(255,255,255,.9);font-weight:500}
 .trow.grand{border-top:1px solid rgba(255,255,255,.15);margin-top:8px;padding-top:10px;font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;color:var(--teal)}
 .trow.grand span:last-child{color:#fff;font-size:19px}
 .totbox .hint{color:rgba(255,255,255,.4);font-size:11px;margin-top:8px}
-/* Mercancias CP */
-.mercs{padding:0 26px 14px}
-.merc{background:var(--field);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;animation:fadeup .25s ease}
-.mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-/* Resumen */
 .resgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:18px 26px}
 .ri{background:var(--field);border:1px solid var(--border);border-radius:6px;padding:11px 14px}
 .ri.full{grid-column:1/-1}
 .ril{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .riv{font-size:14px;font-weight:500;color:var(--navy)}
 .riv.big{color:var(--teal2);font-size:17px;font-weight:700}
-.riv.tipo{color:var(--blue);font-weight:700;font-family:'Montserrat',sans-serif}
-/* Checkbox */
 .checksec{padding:0 26px 18px;display:flex;align-items:flex-start;gap:10px}
 .checksec input[type=checkbox]{width:16px;height:16px;margin-top:3px;flex-shrink:0;accent-color:var(--teal)}
 .checksec label{font-size:12px;color:var(--muted);font-family:'Lato',sans-serif;text-transform:none;letter-spacing:0;font-weight:400}
 .checksec a{color:var(--teal2)}
-/* Nav */
 .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 20px;border-top:1px solid var(--border)}
 .stepof{font-size:12px;color:var(--muted);font-style:italic}
 .btn{padding:11px 24px;border-radius:5px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:none;text-transform:uppercase;letter-spacing:.5px}
@@ -144,7 +135,6 @@ select{cursor:pointer}
 .btnb:hover{background:var(--bg)}
 .btns{background:var(--coral);color:#fff;padding:11px 32px}
 .btns:hover{background:#d14820;transform:translateY(-1px)}
-/* Success */
 .success{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:48px 36px;text-align:center;display:none}
 .success.active{display:block;animation:fadeup .5s ease}
 .sucico{width:68px;height:68px;background:rgba(0,169,157,.1);border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
@@ -168,12 +158,11 @@ footer a{color:var(--teal);text-decoration:none}
 .f.full{grid-column:1}
 .tipo-grid{grid-template-columns:1fr;padding:14px 16px}
 .chead,.nav{padding:14px 16px}
-.concs,.mercs{padding:0 14px 12px}
+.concs{padding:0 14px 12px}
 .totbox{margin:0 14px 16px}
 .resgrid{grid-template-columns:1fr;padding:14px 16px}
 .checksec{padding:0 14px 14px}
 .cgrid{grid-template-columns:1fr 1fr}
-.mgrid{grid-template-columns:1fr 1fr}
 .hright{display:none}
 }
 </style>
@@ -220,7 +209,6 @@ footer a{color:var(--teal);text-decoration:none}
       <div><div class="tipo-t">Complemento de Pago</div><div class="tipo-d">Para liquidar facturas emitidas con metodo PPD</div></div>
       <div class="tipo-chk" id="chk-pago"></div>
     </div>
-
   </div>
   <div class="fields">
     <div class="f">
@@ -337,18 +325,18 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="nav"><button class="btn btnb" id="btn-p2">&larr; Anterior</button><span class="stepof" id="sf2"></span><button class="btn btnp" id="btn-n2">Continuar &rarr;</button></div>
 </div>
 
-<!-- CARD 3: Conceptos O Complemento de Pago -->
+<!-- CARD 3: Conceptos o Complemento de Pago -->
 <div class="card" id="card3">
   <div class="chead"><div class="cico" id="ico3">&#128230;</div><div><h2 id="t3">Conceptos de la Factura</h2><p id="sub3">Agrega los productos o servicios. Puedes agregar multiples conceptos.</p></div></div>
 
-  <!-- SECCION: Conceptos (factura, porte_i, porte_t) -->
+  <!-- SECCION: Conceptos -->
   <div id="sec-conceptos">
     <div class="concs" id="conc-list"></div>
     <div style="padding:0 26px 10px"><button class="btnadd" id="btn-add-conc">+ Agregar concepto</button></div>
     <div class="totbox">
       <div class="trow"><span>Subtotal</span><span id="t-sub">$0.00</span></div>
       <div class="trow"><span>Descuento</span><span id="t-des">$0.00</span></div>
-      <div class="trow grand"><span>Importe Neto</span><span id="t-neto">$0.00</span></div>
+      <div class="trow grand"><span>Subtotal</span><span id="t-neto">$0.00</span></div>
       <div class="hint">IVA y retenciones los calcula Accepti segun tu perfil fiscal</div>
     </div>
   </div>
@@ -431,7 +419,7 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="nav"><button class="btn btnb" id="btn-p3">&larr; Anterior</button><span class="stepof" id="sf3"></span><button class="btn btnp" id="btn-n3">Continuar &rarr;</button></div>
 </div>
 
-<!-- CARD 4: Forma de Pago General (Factura y Carta Porte Ingreso) -->
+<!-- CARD 4: Forma de Pago -->
 <div class="card" id="card4">
   <div class="chead"><div class="cico">&#128179;</div><div><h2>Datos de Pago</h2><p>Indica como fue o sera liquidada esta factura</p></div></div>
   <div class="fields">
@@ -459,7 +447,7 @@ footer a{color:var(--teal);text-decoration:none}
         <option value="28">28 - Tarjeta de debito</option>
         <option value="29">29 - Tarjeta de servicios</option>
         <option value="30">30 - Aplicacion de anticipos</option>
-        <option value="99">99 - Por definir (usar con PPD)</option>
+        <option value="99">99 - Por definir (PPD)</option>
       </select>
       <span class="emsg" id="e-forma_pago">Campo requerido</span>
     </div>
@@ -486,212 +474,15 @@ footer a{color:var(--teal);text-decoration:none}
   <div class="nav"><button class="btn btnb" id="btn-p4">&larr; Anterior</button><span class="stepof" id="sf4"></span><button class="btn btnp" id="btn-n4">Continuar &rarr;</button></div>
 </div>
 
-<!-- CARD 5: Carta Porte 3.1 -->
+<!-- CARD 5: Confirmar -->
 <div class="card" id="card5">
-  <div class="chead"><div class="cico">&#128666;</div><div><h2>Complemento Carta Porte 3.1</h2><p>Datos requeridos por el SAT para el traslado de mercancias</p></div></div>
-  <div class="fields">
-    <div class="f full">
-      <label>Transporte Internacional</label>
-      <div class="pills">
-        <input type="radio" name="transp_int" id="ti-no" value="No" class="pr" checked><label for="ti-no" class="pl">No (Nacional)</label>
-        <input type="radio" name="transp_int" id="ti-si" value="Si" class="pr"><label for="ti-si" class="pl">Si (Internacional)</label>
-      </div>
-    </div>
-
-    <div class="sec-title">Ubicacion Origen</div>
-    <div class="f">
-      <label>RFC del Remitente <span class="r">*</span></label>
-      <input type="text" id="cp_rfc_origen" placeholder="RFC de quien envia" maxlength="13" style="font-family:monospace;text-transform:uppercase">
-      <span class="emsg" id="e-cp_rfc_origen">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Codigo Postal Origen <span class="r">*</span></label>
-      <input type="text" id="cp_cp_origen" placeholder="72000" maxlength="5">
-      <span class="emsg" id="e-cp_cp_origen">5 digitos requeridos</span>
-    </div>
-    <div class="f">
-      <label>Estado Origen <span class="r">*</span></label>
-      <select id="cp_est_origen">
-        <option value="">Seleccionar...</option>
-        <option value="AGU">Aguascalientes</option><option value="BCN">Baja California</option>
-        <option value="BCS">Baja California Sur</option><option value="CAM">Campeche</option>
-        <option value="CHP">Chiapas</option><option value="CHH">Chihuahua</option>
-        <option value="CMX">Ciudad de Mexico</option><option value="COA">Coahuila</option>
-        <option value="COL">Colima</option><option value="DUR">Durango</option>
-        <option value="MEX">Estado de Mexico</option><option value="GUA">Guanajuato</option>
-        <option value="GRO">Guerrero</option><option value="HID">Hidalgo</option>
-        <option value="JAL">Jalisco</option><option value="MIC">Michoacan</option>
-        <option value="MOR">Morelos</option><option value="NAY">Nayarit</option>
-        <option value="NLE">Nuevo Leon</option><option value="OAX">Oaxaca</option>
-        <option value="PUE">Puebla</option><option value="QUE">Queretaro</option>
-        <option value="ROO">Quintana Roo</option><option value="SLP">San Luis Potosi</option>
-        <option value="SIN">Sinaloa</option><option value="SON">Sonora</option>
-        <option value="TAB">Tabasco</option><option value="TAM">Tamaulipas</option>
-        <option value="TLA">Tlaxcala</option><option value="VER">Veracruz</option>
-        <option value="YUC">Yucatan</option><option value="ZAC">Zacatecas</option>
-      </select>
-      <span class="emsg" id="e-cp_est_origen">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Municipio Origen <span class="r">*</span></label>
-      <input type="text" id="cp_mun_origen" placeholder="Nombre del municipio">
-      <span class="hint">Accepti asignara el codigo SAT correspondiente</span>
-      <span class="emsg" id="e-cp_mun_origen">Campo requerido</span>
-    </div>
-    <div class="f full">
-      <label>Fecha y Hora de Salida <span class="r">*</span></label>
-      <input type="datetime-local" id="cp_fecha_salida">
-      <span class="emsg" id="e-cp_fecha_salida">Campo requerido</span>
-    </div>
-
-    <div class="sec-title">Ubicacion Destino</div>
-    <div class="f">
-      <label>RFC del Destinatario <span class="r">*</span></label>
-      <input type="text" id="cp_rfc_destino" placeholder="RFC de quien recibe" maxlength="13" style="font-family:monospace;text-transform:uppercase">
-      <span class="emsg" id="e-cp_rfc_destino">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Codigo Postal Destino <span class="r">*</span></label>
-      <input type="text" id="cp_cp_destino" placeholder="72000" maxlength="5">
-      <span class="emsg" id="e-cp_cp_destino">5 digitos requeridos</span>
-    </div>
-    <div class="f">
-      <label>Estado Destino <span class="r">*</span></label>
-      <select id="cp_est_destino">
-        <option value="">Seleccionar...</option>
-        <option value="AGU">Aguascalientes</option><option value="BCN">Baja California</option>
-        <option value="BCS">Baja California Sur</option><option value="CAM">Campeche</option>
-        <option value="CHP">Chiapas</option><option value="CHH">Chihuahua</option>
-        <option value="CMX">Ciudad de Mexico</option><option value="COA">Coahuila</option>
-        <option value="COL">Colima</option><option value="DUR">Durango</option>
-        <option value="MEX">Estado de Mexico</option><option value="GUA">Guanajuato</option>
-        <option value="GRO">Guerrero</option><option value="HID">Hidalgo</option>
-        <option value="JAL">Jalisco</option><option value="MIC">Michoacan</option>
-        <option value="MOR">Morelos</option><option value="NAY">Nayarit</option>
-        <option value="NLE">Nuevo Leon</option><option value="OAX">Oaxaca</option>
-        <option value="PUE">Puebla</option><option value="QUE">Queretaro</option>
-        <option value="ROO">Quintana Roo</option><option value="SLP">San Luis Potosi</option>
-        <option value="SIN">Sinaloa</option><option value="SON">Sonora</option>
-        <option value="TAB">Tabasco</option><option value="TAM">Tamaulipas</option>
-        <option value="TLA">Tlaxcala</option><option value="VER">Veracruz</option>
-        <option value="YUC">Yucatan</option><option value="ZAC">Zacatecas</option>
-      </select>
-      <span class="emsg" id="e-cp_est_destino">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Municipio Destino <span class="r">*</span></label>
-      <input type="text" id="cp_mun_destino" placeholder="Nombre del municipio">
-      <span class="hint">Accepti asignara el codigo SAT correspondiente</span>
-      <span class="emsg" id="e-cp_mun_destino">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Fecha y Hora de Llegada <span class="r">*</span></label>
-      <input type="datetime-local" id="cp_fecha_llegada">
-      <span class="emsg" id="e-cp_fecha_llegada">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Distancia Recorrida (km) <span class="r">*</span></label>
-      <input type="number" id="cp_distancia" placeholder="150" min="1" step="1">
-      <span class="emsg" id="e-cp_distancia">Campo requerido</span>
-    </div>
-
-    <div class="sec-title">Mercancias Transportadas</div>
-  </div>
-  <div class="mercs" id="merc-list"></div>
-  <div style="padding:0 26px 10px"><button class="btnadd" id="btn-add-merc">+ Agregar mercancia</button></div>
-
-  <div class="fields">
-    <div class="sec-title">Vehiculo (Autotransporte Federal)</div>
-    <div class="f">
-      <label>Permiso SCT <span class="r">*</span></label>
-      <select id="cp_perm_sct">
-        <option value="TPAF01">TPAF01 - Carga general</option>
-        <option value="TPAF02">TPAF02 - Mat. y residuos peligrosos</option>
-        <option value="TPAF03">TPAF03 - Fondos y valores</option>
-        <option value="TPAF04">TPAF04 - Automoviles</option>
-        <option value="TPAF05">TPAF05 - Mudanzas</option>
-        <option value="TPAF06">TPAF06 - Gruas industriales</option>
-        <option value="TPAF07">TPAF07 - Equipos y maquinaria</option>
-        <option value="TPAF08">TPAF08 - Gruas de arrastre</option>
-        <option value="TPAF09">TPAF09 - Materiales de construccion</option>
-        <option value="TPAF10">TPAF10 - Paqueteria y mensajeria</option>
-        <option value="TPAF11">TPAF11 - Carga refrigerada</option>
-      </select>
-    </div>
-    <div class="f">
-      <label>Numero de Permiso SCT <span class="r">*</span></label>
-      <input type="text" id="cp_num_perm" placeholder="Ej. 1234567">
-      <span class="emsg" id="e-cp_num_perm">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Configuracion Vehicular</label>
-      <select id="cp_config_veh">
-        <option value="VL">VL - Vehiculo Ligero</option>
-        <option value="C2">C2 - Camion 2 ejes</option>
-        <option value="C3">C3 - Camion 3 ejes</option>
-        <option value="C2R2">C2R2 - Camion-Remolque 2+2 ejes</option>
-        <option value="T3S2">T3S2 - Tractocamion-Semirremolque 3+2</option>
-        <option value="T3S3">T3S3 - Tractocamion-Semirremolque 3+3</option>
-        <option value="T3S2R4">T3S2R4 - Tractocamion Full 3+2+4</option>
-        <option value="T3S3R2">T3S3R2 - Tractocamion Full 3+3+2</option>
-      </select>
-    </div>
-    <div class="f">
-      <label>Placa del Vehiculo <span class="r">*</span></label>
-      <input type="text" id="cp_placa" placeholder="ABC1234" style="text-transform:uppercase">
-      <span class="emsg" id="e-cp_placa">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Anio del Vehiculo <span class="r">*</span></label>
-      <input type="number" id="cp_anio" placeholder="2020" min="1990" max="2030">
-      <span class="emsg" id="e-cp_anio">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Peso Bruto Vehicular (Ton)</label>
-      <input type="number" id="cp_peso_v" placeholder="8.5" min="0" step="0.01">
-    </div>
-
-    <div class="sec-title">Seguro del Vehiculo</div>
-    <div class="f">
-      <label>Aseguradora Resp. Civil <span class="r">*</span></label>
-      <input type="text" id="cp_aseg" placeholder="Ej. GNP, AXA, Qualitas...">
-      <span class="emsg" id="e-cp_aseg">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Poliza Resp. Civil <span class="r">*</span></label>
-      <input type="text" id="cp_poliza" placeholder="Numero de poliza">
-      <span class="emsg" id="e-cp_poliza">Campo requerido</span>
-    </div>
-
-    <div class="sec-title">Operador (Figura de Transporte)</div>
-    <div class="f">
-      <label>RFC del Operador <span class="r">*</span></label>
-      <input type="text" id="cp_rfc_op" placeholder="RFC del conductor" maxlength="13" style="font-family:monospace;text-transform:uppercase">
-      <span class="emsg" id="e-cp_rfc_op">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Nombre del Operador <span class="r">*</span></label>
-      <input type="text" id="cp_nom_op" placeholder="Nombre completo del conductor">
-      <span class="emsg" id="e-cp_nom_op">Campo requerido</span>
-    </div>
-    <div class="f">
-      <label>Numero de Licencia <span class="r">*</span></label>
-      <input type="text" id="cp_licencia" placeholder="Numero de licencia federal">
-      <span class="emsg" id="e-cp_licencia">Campo requerido</span>
-    </div>
-  </div>
-  <div class="nav"><button class="btn btnb" id="btn-p5">&larr; Anterior</button><span class="stepof" id="sf5"></span><button class="btn btnp" id="btn-n5">Continuar &rarr;</button></div>
-</div>
-
-<!-- CARD 6: Confirmar -->
-<div class="card" id="card6">
   <div class="chead"><div class="cico">&#9989;</div><div><h2>Confirmar Solicitud</h2><p>Revisa que todo sea correcto. Una vez enviado no puede modificarse.</p></div></div>
   <div class="resgrid" id="resumen"></div>
   <div class="checksec">
     <input type="checkbox" id="acepto">
     <label for="acepto">Confirmo que los datos son correctos y autorizo a Accepti Contadores S.C. a procesar y timbrar este CFDI ante el SAT. <a href="https://www.accepti.com.mx" target="_blank">Terminos de servicio</a>.</label>
   </div>
-  <div class="nav"><button class="btn btnb" id="btn-p6">&larr; Anterior</button><span class="stepof" id="sf6"></span><button class="btn btns" id="btn-enviar">&#128228; Enviar Solicitud</button></div>
+  <div class="nav"><button class="btn btnb" id="btn-p5">&larr; Anterior</button><span class="stepof" id="sf5"></span><button class="btn btns" id="btn-enviar">&#128228; Enviar Solicitud</button></div>
 </div>
 
 <!-- SUCCESS -->
@@ -714,7 +505,7 @@ footer a{color:var(--teal);text-decoration:none}
 </div>
 
 </div>
-<footer>&copy; 2024 <a href="https://www.accepti.com.mx" target="_blank">Accepti Contadores S.C.</a> &middot; Privada 14B Sur 6703, Col. Villa Universitaria, Puebla, Pue. &middot; (222) 755-0328</footer>
+<footer>&copy; 2026 <a href="https://www.accepti.com.mx" target="_blank">Accepti Contadores S.C.</a> &middot; Privada 14B Sur 6703, Col. Villa Universitaria, Puebla, Pue. &middot; (222) 755-0328</footer>
 <script src="app.js"></script>
 </body>
 </html>
