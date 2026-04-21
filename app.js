@@ -372,26 +372,26 @@ function addConc() {
 
 function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); recalc(); }
 
-/* Credencial Facturama para busqueda de catalogo SAT */
-var FAC_TOKEN = 'Basic ' + btoa('huguinsf:cis2005');
+/* Proxy Cloudflare Worker — catalogo SAT via Facturama
+   URL del worker: https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev
+   Cambia WORKER_URL despues de hacer el deploy del worker */
+var WORKER_URL = 'https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev';
 var FAC_TIMERS = {};
 
 function buscar(n) {
   var q = document.getElementById('ss'+n).value.trim();
   var drop = document.getElementById('sd'+n);
-  if (q.length < 2) { drop.classList.remove('open'); return; }
+  if (q.length < 3) { drop.classList.remove('open'); return; }
 
-  /* Debounce: espera 350ms antes de llamar la API */
+  /* Debounce: espera 400ms antes de llamar al worker */
   clearTimeout(FAC_TIMERS[n]);
-  FAC_TIMERS[n] = setTimeout(function() { buscarAPI(n, q); }, 350);
+  FAC_TIMERS[n] = setTimeout(function() { buscarAPI(n, q); }, 400);
 }
 
 function buscarAPI(n, q) {
   var drop = document.getElementById('sd'+n);
-  drop.innerHTML = '<div class="nores">&#128269; Buscando...</div>';
-  drop.classList.add('open');
 
-  /* Primero busca en catalogo local (respuesta inmediata) */
+  /* Muestra resultados locales inmediatamente mientras espera la API */
   var local = [];
   for (var i = 0; i < SAT.length; i++) {
     var it = SAT[i];
@@ -399,23 +399,25 @@ function buscarAPI(n, q) {
       local.push(it); if (local.length >= 5) break;
     }
   }
+  if (local.length) {
+    renderResultados(n, local, drop);
+  } else {
+    drop.innerHTML = '<div class="nores">&#128269; Buscando en catalogo SAT...</div>';
+    drop.classList.add('open');
+  }
 
-  /* Luego consulta Facturama API para resultados completos */
-  fetch('https://apisandbox.facturama.mx/catalogs/ProductsOrServices?keyword=' + encodeURIComponent(q), {
-    headers: { 'Authorization': FAC_TOKEN }
-  })
+  /* Consulta el Worker proxy con el catalogo completo */
+  fetch(WORKER_URL + '?keyword=' + encodeURIComponent(q))
   .then(function(r){ return r.json(); })
   .then(function(data){
-    drop.innerHTML = '';
     if (!data || !data.length) {
       if (!local.length) {
-        drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente o consulta el catalogo del SAT.</div>';
-      } else {
-        renderResultados(n, local, drop);
+        drop.innerHTML = '<div class="nores">Sin resultados. Escribe mas palabras o ingresa la clave manualmente.</div>';
+        drop.classList.add('open');
       }
       return;
     }
-    /* Combina: primero locales (mas rapidos), luego API sin duplicados */
+    /* Combina locales + API sin duplicados */
     var vistos = {};
     var combinados = [];
     local.forEach(function(x){ if(!vistos[x.c]){ vistos[x.c]=true; combinados.push({c:x.c,d:x.d,u:x.u}); } });
@@ -428,12 +430,10 @@ function buscarAPI(n, q) {
     renderResultados(n, combinados, drop);
   })
   .catch(function(){
-    /* Si falla la API usa solo el catalogo local */
-    drop.innerHTML = '';
-    if (local.length) {
-      renderResultados(n, local, drop);
-    } else {
+    /* Si falla el worker usa solo catalogo local */
+    if (!local.length) {
       drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
+      drop.classList.add('open');
     }
   });
 }
