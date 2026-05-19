@@ -1,12 +1,13 @@
 /* ================================================================
    ACCEPTI CONTADORES — FORMULARIO CFDI 4.0
-   app.js v5.0 — Factura de Ingreso / Complemento de Pago
-   
-   Reemplaza antes de subir:
+   app.js v6.0 — Selectores de impuestos completos + Memoria local
+
+   Reemplaza antes de subir a producción:
    WEBHOOK_URL -> URL del escenario de Factura en Make
 ================================================================ */
 
 var WEBHOOK_URL = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
+var STORAGE_KEY = 'accepti_cfdi_v6';
 
 var FLUJOS = {
   factura: [1,2,3,4,5],
@@ -27,7 +28,7 @@ var fpos  = 0;
 var nc    = 0;
 
 /* ================================================================
-   CATALOGO SAT
+   CATÁLOGO SAT LOCAL (resultados rápidos mientras carga la API)
 ================================================================ */
 var SAT = [
   {c:"84111506",d:"Servicios de contabilidad",k:"Contabilidad",u:"E48"},
@@ -112,11 +113,160 @@ var UNIDADES = {
 };
 
 /* ================================================================
+   ESTILOS DINÁMICOS — Campos de impuestos por concepto
+================================================================ */
+(function injectStyles() {
+  var s = document.createElement('style');
+  s.textContent =
+    '.taxgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)}' +
+    '.taxgrid .f label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}' +
+    '.taxgrid select,.taxgrid input{padding:7px 9px;font-size:12px}' +
+    '.cuota-row{display:none;margin-top:6px;padding:8px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:6px}' +
+    '.cuota-row.visible{display:block}' +
+    '.cuota-row label{color:var(--yellow)!important}' +
+    '.conc-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;background:var(--lite);border:1px solid rgba(0,169,157,.25);border-radius:6px;padding:8px 14px}' +
+    '.conc-total-label{font-size:10px;font-family:Montserrat,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--teal2)}' +
+    '.conc-total-value{font-family:monospace;font-size:14px;font-weight:700;color:var(--teal2)}' +
+    '.restore-banner{position:fixed;top:0;left:0;right:0;background:var(--teal2);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;z-index:9999;font-family:Montserrat,sans-serif;font-size:12px;font-weight:600}' +
+    '.restore-banner button{background:none;border:1px solid rgba(255,255,255,.5);color:#fff;font-size:11px;cursor:pointer;padding:3px 10px;border-radius:3px;font-weight:700}' +
+    '.restore-banner .rst-limpiar{margin-right:8px;opacity:.8}';
+  document.head.appendChild(s);
+})();
+
+/* ================================================================
+   MEMORIA LOCAL — Guardar y restaurar borrador automáticamente
+================================================================ */
+function saveToStorage() {
+  try {
+    var draft = { tipo: tipo, campos: {}, conceptos: [] };
+    var fields = [
+      'rfc_emisor','email_emisor','rfc_receptor','nombre_receptor','cp_receptor',
+      'regimen_receptor','uso_cfdi','email_receptor','uuid_origen','serie_origen',
+      'folio_origen','fecha_pago','monto_pago','num_parcialidad','saldo_anterior',
+      'num_operacion','forma_pago','tipo_cambio','referencia','notas'
+    ];
+    fields.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) draft.campos[id] = el.value;
+    });
+    var m  = document.querySelector('input[name=metodo]:checked');
+    var mo = document.querySelector('input[name=moneda]:checked');
+    var mc = document.querySelector('input[name=mon_cp]:checked');
+    if (m)  draft.campos.metodo  = m.value;
+    if (mo) draft.campos.moneda  = mo.value;
+    if (mc) draft.campos.mon_cp  = mc.value;
+
+    getIds().forEach(function(n) {
+      draft.conceptos.push({
+        desc:    g('cdesc'+n),
+        sm:      g('sm'+n),
+        sco:     (document.getElementById('sco'+n)  || {}).textContent || '',
+        sde:     (document.getElementById('sde'+n)  || {}).textContent || '',
+        cunit:   g('cunit'+n),
+        ccant:   g('ccant'+n),
+        cprice:  g('cprice'+n),
+        cdisc:   g('cdisc'+n),
+        civa:    g('civa'+n),
+        cretiva: g('cretiva'+n),
+        cretisr: g('cretisr'+n),
+        cieps:   g('cieps'+n),
+        ccuota:  g('ccuota'+n) || ''
+      });
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  } catch(e) {}
+}
+
+function restoreFromStorage() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    var draft = JSON.parse(raw);
+
+    if (draft.tipo) selTipo(draft.tipo);
+
+    var campos = draft.campos || {};
+    Object.keys(campos).forEach(function(id) {
+      if (id === 'metodo') {
+        var r = document.querySelector('input[name=metodo][value="'+campos[id]+'"]');
+        if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+      } else if (id === 'moneda') {
+        var r2 = document.querySelector('input[name=moneda][value="'+campos[id]+'"]');
+        if (r2) { r2.checked = true; r2.dispatchEvent(new Event('change')); }
+      } else if (id === 'mon_cp') {
+        var r3 = document.querySelector('input[name=mon_cp][value="'+campos[id]+'"]');
+        if (r3) r3.checked = true;
+      } else {
+        var el = document.getElementById(id);
+        if (el) el.value = campos[id];
+      }
+    });
+
+    if (draft.conceptos && draft.conceptos.length > 0) {
+      document.getElementById('conc-list').innerHTML = '';
+      nc = 0;
+      draft.conceptos.forEach(function(c) {
+        addConc();
+        var n = nc;
+        if (c.desc)   document.getElementById('cdesc'+n).value  = c.desc;
+        if (c.sm) {
+          document.getElementById('sm'+n).value = c.sm;
+          if (c.sco) {
+            document.getElementById('sco'+n).textContent = c.sco;
+            document.getElementById('sde'+n).textContent = c.sde || '';
+            document.getElementById('ssel'+n).classList.add('show');
+          }
+        }
+        if (c.cunit)   { var e1=document.getElementById('cunit'+n);   if(e1) e1.value=c.cunit; }
+        if (c.ccant)   { var e2=document.getElementById('ccant'+n);   if(e2) e2.value=c.ccant; }
+        if (c.cprice)  { var e3=document.getElementById('cprice'+n);  if(e3) e3.value=c.cprice; }
+        if (c.cdisc)   { var e4=document.getElementById('cdisc'+n);   if(e4) e4.value=c.cdisc; }
+        if (c.civa)    { var e5=document.getElementById('civa'+n);    if(e5) e5.value=c.civa; }
+        if (c.cretiva) { var e6=document.getElementById('cretiva'+n); if(e6) e6.value=c.cretiva; }
+        if (c.cretisr) { var e7=document.getElementById('cretisr'+n); if(e7) e7.value=c.cretisr; }
+        if (c.cieps)   { var e8=document.getElementById('cieps'+n);   if(e8){ e8.value=c.cieps; toggleCuota(n); } }
+        if (c.ccuota)  { var e9=document.getElementById('ccuota'+n);  if(e9) e9.value=c.ccuota; }
+        calcConc(n);
+      });
+    }
+    recalc();
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearStorage() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+}
+
+function showRestoreBanner() {
+  var b = document.createElement('div');
+  b.className = 'restore-banner';
+  b.innerHTML =
+    '<span>&#x2705; Se restauró tu borrador anterior — puedes continuar donde lo dejaste.</span>' +
+    '<span>' +
+    '<button class="rst-limpiar" onclick="limpiarBorrador()">Empezar de nuevo</button>' +
+    '<button onclick="this.closest(\'.restore-banner\').remove()">Cerrar</button>' +
+    '</span>';
+  document.body.insertBefore(b, document.body.firstChild);
+  setTimeout(function() { if (b.parentNode) b.remove(); }, 6000);
+}
+
+function limpiarBorrador() {
+  clearStorage();
+  window.location.reload();
+}
+
+/* ================================================================
    INIT
 ================================================================ */
 document.addEventListener('DOMContentLoaded', function() {
   var img = document.getElementById('logo-img');
-  if (img) { img.onerror = function(){ img.style.display='none'; document.getElementById('logo-fb').style.display='grid'; }; }
+  if (img) {
+    img.onerror = function(){
+      img.style.display = 'none';
+      document.getElementById('logo-fb').style.display = 'grid';
+    };
+  }
 
   ['factura','pago'].forEach(function(t) {
     document.getElementById('tc-'+t).addEventListener('click', function(){ selTipo(t); });
@@ -140,33 +290,40 @@ document.addEventListener('DOMContentLoaded', function() {
   addUpper('rfc_receptor','rfc_receptor');
   addUpper('nombre_receptor','nombre_receptor');
 
-  document.getElementById('email_emisor').addEventListener('input', function(){ clrE('email_emisor'); });
-  document.getElementById('cp_receptor').addEventListener('input', function(){ clrE('cp_receptor'); });
-  document.getElementById('regimen_receptor').addEventListener('change', function(){ clrE('regimen_receptor'); });
-  document.getElementById('uso_cfdi').addEventListener('change', function(){ clrE('uso_cfdi'); });
-  document.getElementById('nombre_receptor').addEventListener('input', function(){ clrE('nombre_receptor'); });
-  document.getElementById('uuid_origen').addEventListener('input', function(){ this.value=this.value.toUpperCase(); clrE('uuid_origen'); });
-  document.getElementById('monto_pago').addEventListener('input', function(){ clrE('monto_pago'); });
-  document.getElementById('fecha_pago').addEventListener('input', function(){ clrE('fecha_pago'); });
-  document.getElementById('forma_pago_cp').addEventListener('change', function(){ clrE('forma_pago_cp'); });
-  document.getElementById('saldo_anterior').addEventListener('input', function(){ clrE('saldo_anterior'); });
-  document.getElementById('forma_pago').addEventListener('change', function(){ clrE('forma_pago'); });
+  var autoSaveFields = [
+    'email_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
+    'uuid_origen','monto_pago','fecha_pago','forma_pago_cp','saldo_anterior',
+    'forma_pago','tipo_cambio','referencia','notas','serie_origen','folio_origen',
+    'num_operacion','num_parcialidad','email_receptor'
+  ];
+  autoSaveFields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input',  function(){ clrE(id); saveToStorage(); });
+    el.addEventListener('change', function(){ clrE(id); saveToStorage(); });
+  });
 
-  // PPD -> fuerza forma de pago 99
+  document.getElementById('uuid_origen').addEventListener('input', function(){
+    this.value = this.value.toUpperCase();
+  });
+
   document.querySelectorAll('input[name=metodo]').forEach(function(r){
     r.addEventListener('change', function(){
       var fp = document.getElementById('forma_pago');
-      if (this.value === 'PPD') {
-        fp.value = '99';
-        fp.disabled = true;
-      } else {
-        fp.disabled = false;
-      }
+      if (this.value === 'PPD') { fp.value = '99'; fp.disabled = true; }
+      else { fp.disabled = false; }
+      saveToStorage();
     });
   });
 
-  document.getElementById('mon-usd').addEventListener('change', function(){ document.getElementById('f-tc').classList.remove('hide'); });
-  document.getElementById('mon-mxn').addEventListener('change', function(){ document.getElementById('f-tc').classList.add('hide'); });
+  document.getElementById('mon-usd').addEventListener('change', function(){
+    document.getElementById('f-tc').classList.remove('hide');
+    saveToStorage();
+  });
+  document.getElementById('mon-mxn').addEventListener('change', function(){
+    document.getElementById('f-tc').classList.add('hide');
+    saveToStorage();
+  });
 
   document.addEventListener('click', function(e){
     if (!e.target.closest('.satwrap')) {
@@ -174,18 +331,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  addConc();
+  var restored = restoreFromStorage();
+  if (!restored) addConc();
   renderStepbar();
+  if (restored && tipo) showRestoreBanner();
 });
 
 function addUpper(id, errId) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.addEventListener('input', function(){ this.value=this.value.toUpperCase(); if(errId) clrE(errId); });
+  el.addEventListener('input', function(){
+    this.value = this.value.toUpperCase();
+    if (errId) clrE(errId);
+    saveToStorage();
+  });
 }
 
 /* ================================================================
-   SELECCION DE TIPO
+   SELECCIÓN DE TIPO
 ================================================================ */
 function selTipo(t) {
   tipo = t;
@@ -196,8 +359,9 @@ function selTipo(t) {
     document.getElementById('chk-'+x).textContent = '';
   });
   document.getElementById('tc-'+t).classList.add('sel');
-  document.getElementById('chk-'+t).textContent = '\u2713';
+  document.getElementById('chk-'+t).textContent = '✓';
   renderStepbar();
+  saveToStorage();
 }
 
 /* ================================================================
@@ -208,21 +372,22 @@ function renderStepbar() {
   if (!flujo.length) { bar.innerHTML = ''; return; }
   var html = '';
   for (var i = 0; i < flujo.length; i++) {
-    var s = flujo[i];
+    var s   = flujo[i];
     var cls = s === flujo[fpos] ? 'active' : (i < fpos ? 'done' : '');
-    html += '<div class="sb"><div class="snum '+cls+'">'+(cls==='done'?'\u2713':s)+'</div><div class="slabel '+cls+'">'+LABELS[s]+'</div></div>';
+    html += '<div class="sb"><div class="snum '+cls+'">'+(cls==='done'?'✓':s)+'</div>' +
+            '<div class="slabel '+cls+'">'+LABELS[s]+'</div></div>';
     if (i < flujo.length-1) html += '<div class="sarrow">&rsaquo;</div>';
   }
   bar.innerHTML = html;
   var cur = fpos+1, tot = flujo.length;
   for (var j=1; j<=5; j++) {
-    var el = document.getElementById('sf'+j);
-    if (el) el.textContent = 'Paso '+cur+' de '+tot;
+    var sf = document.getElementById('sf'+j);
+    if (sf) sf.textContent = 'Paso '+cur+' de '+tot;
   }
 }
 
 /* ================================================================
-   NAVEGACION
+   NAVEGACIÓN
 ================================================================ */
 function goNext() {
   if (!tipo || !flujo.length) { alert('Selecciona el tipo de CFDI para continuar.'); return; }
@@ -234,14 +399,14 @@ function goNext() {
   if (nextStep === 5) armarResumen();
   mostrarCard(nextStep);
   renderStepbar();
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function goPrev() {
   fpos--;
   mostrarCard(flujo[fpos]);
   renderStepbar();
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function mostrarCard(n) {
@@ -257,23 +422,22 @@ function configurarFlujo() {
   var ico3    = document.getElementById('ico3');
   var t3      = document.getElementById('t3');
   var sub3    = document.getElementById('sub3');
-
   if (tipo === 'pago') {
     secConc.style.display = 'none';
     secPago.style.display = 'block';
-    ico3.textContent = '\u{1F4B3}';
-    t3.textContent   = 'Datos del Complemento de Pago';
-    sub3.textContent = 'Proporciona los datos del pago recibido y la factura que se liquida';
+    ico3.textContent  = '\u{1F4B3}';
+    t3.textContent    = 'Datos del Complemento de Pago';
+    sub3.textContent  = 'Proporciona los datos del pago recibido y la factura que se liquida';
   } else {
     secConc.style.display = 'block';
     secPago.style.display = 'none';
-    t3.textContent  = 'Conceptos de la Factura';
-    sub3.textContent= 'Agrega los productos o servicios. Puedes agregar multiples conceptos.';
+    t3.textContent   = 'Conceptos de la Factura';
+    sub3.textContent = 'Agrega los productos o servicios. Puedes agregar multiples conceptos.';
   }
 }
 
 /* ================================================================
-   VALIDACION
+   VALIDACIÓN
 ================================================================ */
 function validar(step) {
   var ok = true;
@@ -282,7 +446,7 @@ function validar(step) {
     if (!tipo) { alert('Selecciona el tipo de CFDI para continuar.'); return false; }
     if (g('rfc_emisor').trim().length < 12) { marcarErr('rfc_emisor'); ok=false; }
     var em = g('email_emisor').trim();
-    if (!em || em.indexOf('@')<1) { marcarErr('email_emisor'); ok=false; }
+    if (!em || em.indexOf('@') < 1) { marcarErr('email_emisor'); ok=false; }
   }
   if (step === 2) {
     if (g('rfc_receptor').trim().length < 12) { marcarErr('rfc_receptor'); ok=false; }
@@ -316,84 +480,201 @@ function validar(step) {
   }
   if (!ok) {
     var firstErr = document.querySelector('.err');
-    if (firstErr) firstErr.scrollIntoView({behavior:'smooth',block:'center'});
+    if (firstErr) firstErr.scrollIntoView({behavior:'smooth', block:'center'});
   }
   return ok;
 }
 
 function marcarErr(id){ var el=document.getElementById(id); if(el)el.classList.add('err'); var em=document.getElementById('e-'+id); if(em)em.style.display='block'; }
 function clrE(id){ var el=document.getElementById(id); if(el)el.classList.remove('err'); var em=document.getElementById('e-'+id); if(em)em.style.display='none'; }
-function g(id){ var el=document.getElementById(id); return el?el.value:''; }
+function g(id){ var el=document.getElementById(id); return el ? el.value : ''; }
 
 /* ================================================================
-   CONCEPTOS
+   CONCEPTOS — Con selectores de impuestos completos
 ================================================================ */
 function addConc() {
   nc++;
   var n = nc;
+
   var unitsHtml = Object.keys(UNIDADES).map(function(k){
     return '<option value="'+k+'"'+(k==='E48'?' selected':'')+'>'+UNIDADES[k]+'</option>';
   }).join('');
+
   var div = document.createElement('div');
   div.className = 'conc'; div.id = 'c'+n;
+
   div.innerHTML =
-    '<div class="chead2">'+
-      '<span class="cnum">Concepto '+n+'</span>'+
-      '<div class="cdesc-wrap"><input type="text" id="cdesc'+n+'" placeholder="Descripcion del producto o servicio"></div>'+
-      '<button class="btnrm" data-n="'+n+'">&times;</button>'+
-    '</div>'+
-    '<div class="f" style="margin-bottom:12px">'+
-      '<label>Clave SAT</label>'+
-      '<div class="satwrap" id="sw'+n+'">'+
-        '<span class="satico">&#128269;</span>'+
-        '<input type="text" class="satinput" id="ss'+n+'" placeholder="Buscar producto o servicio..." autocomplete="off">'+
-        '<div class="satdrop" id="sd'+n+'"></div>'+
-        '<div class="satmanual"><span>O clave manual:</span><input type="text" id="sm'+n+'" placeholder="84111506" maxlength="8"></div>'+
-      '</div>'+
-      '<div class="satsel" id="ssel'+n+'"><strong id="sco'+n+'"></strong><span id="sde'+n+'"></span><button class="satclr" data-n="'+n+'">&times;</button></div>'+
-      '<a href="https://pys.sat.gob.mx/PyS/catPyS.aspx" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>'+
-    '</div>'+
-    '<div class="cgrid">'+
-      '<div class="f"><label>Cantidad</label><input type="number" id="ccant'+n+'" value="1" min="0.001" step="0.001"></div>'+
-      '<div class="f"><label>Unidad SAT</label><select id="cunit'+n+'">'+unitsHtml+'</select></div>'+
-      '<div class="f"><label>Precio unitario (sin IVA)</label><div class="pfx"><span class="pfxl">$</span><input type="number" id="cprice'+n+'" placeholder="0.00" min="0" step="0.01"></div></div>'+
-      '<div class="f"><label>Descuento %</label><input type="number" id="cdisc'+n+'" placeholder="0" min="0" max="100" step="0.01"></div>'+
+    '<div class="chead2">' +
+      '<span class="cnum">Concepto '+n+'</span>' +
+      '<div class="cdesc-wrap"><input type="text" id="cdesc'+n+'" placeholder="Descripcion del producto o servicio"></div>' +
+      '<button class="btnrm" data-n="'+n+'">&times;</button>' +
+    '</div>' +
+    '<div class="f" style="margin-bottom:12px">' +
+      '<label>Clave SAT</label>' +
+      '<div class="satwrap" id="sw'+n+'">' +
+        '<span class="satico">&#128269;</span>' +
+        '<input type="text" class="satinput" id="ss'+n+'" placeholder="Buscar producto o servicio..." autocomplete="off">' +
+        '<div class="satdrop" id="sd'+n+'"></div>' +
+        '<div class="satmanual"><span>O clave manual:</span><input type="text" id="sm'+n+'" placeholder="84111506" maxlength="8"></div>' +
+      '</div>' +
+      '<div class="satsel" id="ssel'+n+'"><strong id="sco'+n+'"></strong><span id="sde'+n+'"></span><button class="satclr" data-n="'+n+'">&times;</button></div>' +
+      '<a href="https://pys.sat.gob.mx/PyS/catPyS.aspx" target="_blank" class="sat-catalogo-link">&#128269; No encuentras tu clave? Consulta el catalogo oficial del SAT</a>' +
+    '</div>' +
+    '<div class="cgrid">' +
+      '<div class="f"><label>Cantidad</label><input type="number" id="ccant'+n+'" value="1" min="0.001" step="0.001"></div>' +
+      '<div class="f"><label>Unidad SAT</label><select id="cunit'+n+'">'+unitsHtml+'</select></div>' +
+      '<div class="f"><label>Precio unitario (sin IVA)</label><div class="pfx"><span class="pfxl">$</span><input type="number" id="cprice'+n+'" placeholder="0.00" min="0" step="0.01"></div></div>' +
+      '<div class="f"><label>Descuento %</label><input type="number" id="cdisc'+n+'" placeholder="0" min="0" max="100" step="0.01"></div>' +
     '</div>';
+
   document.getElementById('conc-list').appendChild(div);
+
+  /* ---- Sección de impuestos ---- */
+  var taxgrid = document.createElement('div');
+  taxgrid.className = 'taxgrid';
+
+  /* IVA */
+  var fIva = document.createElement('div'); fIva.className = 'f';
+  fIva.innerHTML =
+    '<label>IVA</label>' +
+    '<select id="civa'+n+'">' +
+      '<option value="0.16">16% — General</option>' +
+      '<option value="0.08">8% — Zona fronteriza</option>' +
+      '<option value="0">0% — Alimentos/Medicamentos</option>' +
+      '<option value="exento">Exento — Serv. medicos, educacion</option>' +
+    '</select>';
+  taxgrid.appendChild(fIva);
+
+  /* Retención IVA */
+  var fRetIva = document.createElement('div'); fRetIva.className = 'f';
+  fRetIva.innerHTML =
+    '<label>Ret. IVA</label>' +
+    '<select id="cretiva'+n+'">' +
+      '<option value="0">Sin retención</option>' +
+      '<option value="0.1067">10.67% — Honorarios (PF a PM)</option>' +
+      '<option value="0.10">10% — Arrendamiento (PF a PM)</option>' +
+      '<option value="0.04">4% — Autotransporte (PF a PM)</option>' +
+    '</select>';
+  taxgrid.appendChild(fRetIva);
+
+  /* Retención ISR */
+  var fRetIsr = document.createElement('div'); fRetIsr.className = 'f';
+  fRetIsr.innerHTML =
+    '<label>Ret. ISR</label>' +
+    '<select id="cretisr'+n+'">' +
+      '<option value="0">Sin retención</option>' +
+      '<option value="0.10">10% — Honorarios / Arrendamiento</option>' +
+      '<option value="0.0125">1.25% — Caso específico</option>' +
+    '</select>';
+  taxgrid.appendChild(fRetIsr);
+
+  /* IEPS */
+  var fIeps = document.createElement('div'); fIeps.className = 'f';
+  fIeps.innerHTML =
+    '<label>IEPS</label>' +
+    '<select id="cieps'+n+'">' +
+      '<option value="0">Sin IEPS</option>' +
+      '<option value="0.08">8% — Alimentos chatarra (&gt;275 kcal)</option>' +
+      '<option value="0.265">26.5% — Cerveza / Pulque</option>' +
+      '<option value="0.30">30% — Vinos (14°-20° GL)</option>' +
+      '<option value="0.53">53% — Licores (&gt;20° GL)</option>' +
+      '<option value="cuota">Cuota $/unidad — Combustibles</option>' +
+    '</select>';
+  taxgrid.appendChild(fIeps);
+
+  div.appendChild(taxgrid);
+
+  /* Campo cuota IEPS — solo visible para combustibles */
+  var cuotaRow = document.createElement('div');
+  cuotaRow.className = 'cuota-row'; cuotaRow.id = 'cuota-row'+n;
+  cuotaRow.innerHTML =
+    '<div class="f">' +
+      '<label>Cuota IEPS ($ por unidad — litro, kg, etc.)</label>' +
+      '<div class="pfx"><span class="pfxl">$</span>' +
+        '<input type="number" id="ccuota'+n+'" placeholder="6.25" min="0" step="0.0001">' +
+      '</div>' +
+      '<span class="hint">Consulta la cuota vigente en el SAT cada mes (varía). Ej. gasolina magna ≈ $6.25/L</span>' +
+    '</div>';
+  div.appendChild(cuotaRow);
+
+  /* Total por concepto */
+  var totRow = document.createElement('div');
+  totRow.className = 'conc-total';
+  totRow.innerHTML = '<span class="conc-total-label">Total concepto</span><span class="conc-total-value" id="ctotal'+n+'">$0.00</span>';
+  div.appendChild(totRow);
+
+  /* ---- Event listeners ---- */
   div.querySelector('.btnrm').addEventListener('click', function(){ rmConc(this.dataset.n); });
   div.querySelector('.satclr').addEventListener('click', function(){ clearSAT(this.dataset.n); });
-  div.querySelector('#ss'+n).addEventListener('input', function(){ buscar(n); });
-  div.querySelector('#sm'+n).addEventListener('input', function(){ manualSAT(n); });
-  div.querySelector('#ccant'+n).addEventListener('input', recalc);
-  div.querySelector('#cprice'+n).addEventListener('input', recalc);
-  div.querySelector('#cdisc'+n).addEventListener('input', recalc);
+
+  (function(nn){
+    div.querySelector('#ss'+nn).addEventListener('input', function(){ buscar(nn); });
+    div.querySelector('#sm'+nn).addEventListener('input', function(){ manualSAT(nn); calcConc(nn); saveToStorage(); });
+    div.querySelector('#cdesc'+nn).addEventListener('input', saveToStorage);
+
+    ['ccant','cprice','cdisc'].forEach(function(prefix){
+      var el = document.getElementById(prefix+nn);
+      if (el) {
+        el.addEventListener('input',  function(){ calcConc(nn); saveToStorage(); });
+        el.addEventListener('change', function(){ calcConc(nn); saveToStorage(); });
+      }
+    });
+
+    ['civa','cretiva','cretisr'].forEach(function(prefix){
+      var el = document.getElementById(prefix+nn);
+      if (el) {
+        el.addEventListener('change', function(){ calcConc(nn); saveToStorage(); });
+      }
+    });
+
+    document.getElementById('cieps'+nn).addEventListener('change', function(){
+      toggleCuota(nn); calcConc(nn); saveToStorage();
+    });
+
+    var cuotaEl = document.getElementById('ccuota'+nn);
+    if (cuotaEl) cuotaEl.addEventListener('input', function(){ calcConc(nn); saveToStorage(); });
+  })(n);
+
+  calcConc(n);
   recalc();
 }
 
-function rmConc(n){ var el=document.getElementById('c'+n); if(el)el.remove(); recalc(); }
+function rmConc(n) {
+  var el = document.getElementById('c'+n);
+  if (el) el.remove();
+  recalc();
+  saveToStorage();
+}
 
-/* Proxy Cloudflare Worker — catalogo SAT via Facturama
-   URL del worker: https://accepti-sat-catalogo.TU_SUBDOMINIO.workers.dev
-   Cambia WORKER_URL despues de hacer el deploy del worker */
-var WORKER_URL = 'https://accepti.kuryaky.workers.dev';
-var FAC_TIMERS = {};
+/* ================================================================
+   TOGGLE CUOTA IEPS
+================================================================ */
+function toggleCuota(n) {
+  var iepsEl    = document.getElementById('cieps'+n);
+  var cuotaRow  = document.getElementById('cuota-row'+n);
+  if (!iepsEl || !cuotaRow) return;
+  if (iepsEl.value === 'cuota') cuotaRow.classList.add('visible');
+  else cuotaRow.classList.remove('visible');
+}
+
+/* ================================================================
+   BÚSQUEDA CLAVE SAT (Worker Cloudflare)
+================================================================ */
+var WORKER_URL  = 'https://accepti.kuryaky.workers.dev';
+var FAC_TIMERS  = {};
 
 function buscar(n) {
-  var q = document.getElementById('ss'+n).value.trim();
+  var q    = document.getElementById('ss'+n).value.trim();
   var drop = document.getElementById('sd'+n);
   if (q.length < 3) { drop.classList.remove('open'); return; }
-
-  /* Debounce: espera 400ms antes de llamar al worker */
   clearTimeout(FAC_TIMERS[n]);
-  FAC_TIMERS[n] = setTimeout(function() { buscarAPI(n, q); }, 400);
+  FAC_TIMERS[n] = setTimeout(function(){ buscarAPI(n, q); }, 400);
 }
 
 function buscarAPI(n, q) {
   var drop = document.getElementById('sd'+n);
-
-  /* Muestra resultados locales inmediatamente mientras espera la API */
   var local = [];
-  for (var i = 0; i < SAT.length; i++) {
+  for (var i=0; i<SAT.length; i++) {
     var it = SAT[i];
     if (it.d.toLowerCase().indexOf(q.toLowerCase()) >= 0 || it.c.indexOf(q) >= 0) {
       local.push(it); if (local.length >= 5) break;
@@ -405,37 +686,29 @@ function buscarAPI(n, q) {
     drop.innerHTML = '<div class="nores">&#128269; Buscando en catalogo SAT...</div>';
     drop.classList.add('open');
   }
-
-  /* Consulta el Worker proxy con el catalogo completo */
   fetch(WORKER_URL + '?keyword=' + encodeURIComponent(q))
-  .then(function(r){ return r.json(); })
-  .then(function(data){
-    if (!data || !data.length) {
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data || !data.length) {
+        if (!local.length) {
+          drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
+          drop.classList.add('open');
+        }
+        return;
+      }
+      var vistos = {}, combinados = [];
+      local.forEach(function(x){ if(!vistos[x.c]){ vistos[x.c]=true; combinados.push({c:x.c,d:x.d,u:x.u}); } });
+      data.slice(0,15).forEach(function(x){
+        if (!vistos[x.Value]) { vistos[x.Value]=true; combinados.push({c:x.Value, d:x.Name, u:'E48'}); }
+      });
+      renderResultados(n, combinados, drop);
+    })
+    .catch(function(){
       if (!local.length) {
-        drop.innerHTML = '<div class="nores">Sin resultados. Escribe mas palabras o ingresa la clave manualmente.</div>';
+        drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
         drop.classList.add('open');
       }
-      return;
-    }
-    /* Combina locales + API sin duplicados */
-    var vistos = {};
-    var combinados = [];
-    local.forEach(function(x){ if(!vistos[x.c]){ vistos[x.c]=true; combinados.push({c:x.c,d:x.d,u:x.u}); } });
-    data.slice(0, 15).forEach(function(x){
-      if (!vistos[x.Value]) {
-        vistos[x.Value] = true;
-        combinados.push({ c: x.Value, d: x.Name, u: 'E48' });
-      }
     });
-    renderResultados(n, combinados, drop);
-  })
-  .catch(function(){
-    /* Si falla el worker usa solo catalogo local */
-    if (!local.length) {
-      drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
-      drop.classList.add('open');
-    }
-  });
 }
 
 function renderResultados(n, items, drop) {
@@ -444,81 +717,192 @@ function renderResultados(n, items, drop) {
     var row = document.createElement('div');
     row.className = 'satitem';
     row.innerHTML = '<span class="satcode">'+item.c+'</span><span>'+item.d+'</span>';
-    row.addEventListener('click', function(e){
-      e.stopPropagation();
-      selSAT(n, item.c, item.d, item.u || 'E48');
-    });
+    row.addEventListener('click', function(e){ e.stopPropagation(); selSAT(n, item.c, item.d, item.u||'E48'); });
     drop.appendChild(row);
   });
-  if (items.length === 0) {
-    drop.innerHTML = '<div class="nores">Sin resultados. Ingresa la clave manualmente.</div>';
-  }
+  if (!items.length) drop.innerHTML = '<div class="nores">Sin resultados.</div>';
   drop.classList.add('open');
 }
 
-function selSAT(n,code,desc,unit){
+function selSAT(n, code, desc, unit) {
   document.getElementById('sd'+n).classList.remove('open');
-  document.getElementById('ss'+n).value='';
-  document.getElementById('sm'+n).value=code;
-  document.getElementById('sco'+n).textContent=code;
-  document.getElementById('sde'+n).textContent=' - '+desc;
+  document.getElementById('ss'+n).value = '';
+  document.getElementById('sm'+n).value = code;
+  document.getElementById('sco'+n).textContent = code;
+  document.getElementById('sde'+n).textContent = ' - '+desc;
   document.getElementById('ssel'+n).classList.add('show');
-  if(unit){var s=document.getElementById('cunit'+n);if(s)s.value=unit;}
+  if (unit) { var s=document.getElementById('cunit'+n); if(s) s.value=unit; }
+  saveToStorage();
 }
-function manualSAT(n){
-  var code=document.getElementById('sm'+n).value.trim();
-  if(code.length>=6){
-    var found=null; for(var i=0;i<SAT.length;i++){if(SAT[i].c===code){found=SAT[i];break;}}
-    document.getElementById('sco'+n).textContent=code;
-    document.getElementById('sde'+n).textContent=found?' - '+found.d:' - Clave manual';
+
+function manualSAT(n) {
+  var code = document.getElementById('sm'+n).value.trim();
+  if (code.length >= 6) {
+    var found = null;
+    for (var i=0; i<SAT.length; i++) { if (SAT[i].c === code) { found=SAT[i]; break; } }
+    document.getElementById('sco'+n).textContent = code;
+    document.getElementById('sde'+n).textContent = found ? ' - '+found.d : ' - Clave manual';
     document.getElementById('ssel'+n).classList.add('show');
-    if(found&&found.u){var s=document.getElementById('cunit'+n);if(s)s.value=found.u;}
+    if (found && found.u) { var s=document.getElementById('cunit'+n); if(s) s.value=found.u; }
   }
 }
-function clearSAT(n){
+
+function clearSAT(n) {
   document.getElementById('ssel'+n).classList.remove('show');
-  document.getElementById('sm'+n).value='';
-  document.getElementById('ss'+n).value='';
+  document.getElementById('sm'+n).value = '';
+  document.getElementById('ss'+n).value = '';
+  saveToStorage();
 }
 
-function getIds(){var ids=[];document.querySelectorAll('.conc').forEach(function(r){ids.push(r.id.replace('c',''));});return ids;}
+function getIds() {
+  var ids = [];
+  document.querySelectorAll('.conc').forEach(function(r){ ids.push(r.id.replace('c','')); });
+  return ids;
+}
 
-function recalc(){
-  var sub=0,des=0;
-  getIds().forEach(function(n){
-    var cant=parseFloat(document.getElementById('ccant'+n)&&document.getElementById('ccant'+n).value)||0;
-    var price=parseFloat(document.getElementById('cprice'+n)&&document.getElementById('cprice'+n).value)||0;
-    var disc=parseFloat(document.getElementById('cdisc'+n)&&document.getElementById('cdisc'+n).value)||0;
-    var base=cant*price; sub+=base; des+=base*(disc/100);
+/* ================================================================
+   CÁLCULO POR CONCEPTO
+================================================================ */
+function calcConc(n) {
+  var cant    = parseFloat(g('ccant'+n))  || 0;
+  var precio  = parseFloat(g('cprice'+n)) || 0;
+  var disc    = parseFloat(g('cdisc'+n))  || 0;
+  var ivaStr  = g('civa'+n)   || '0.16';
+  var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+  var retIva  = parseFloat(g('cretiva'+n)) || 0;
+  var retIsr  = parseFloat(g('cretisr'+n)) || 0;
+  var iepsVal = g('cieps'+n)  || '0';
+
+  var subtotal = cant * precio;
+  var descuento = subtotal * (disc / 100);
+  var base = subtotal - descuento;
+
+  var montoIeps = 0;
+  if (iepsVal === 'cuota') {
+    var cuota = parseFloat(g('ccuota'+n)) || 0;
+    montoIeps = cant * cuota;
+  } else {
+    montoIeps = base * (parseFloat(iepsVal) || 0);
+  }
+
+  var total = base + (base * iva) + montoIeps - (base * retIva) - (base * retIsr);
+
+  var el = document.getElementById('ctotal'+n);
+  if (el) el.textContent = fmt(total);
+
+  recalc();
+}
+
+/* ================================================================
+   TOTALES GENERALES DESGLOSADOS
+================================================================ */
+function recalc() {
+  var totSub=0, totDes=0, totIva=0, totIeps=0, totRetIva=0, totRetIsr=0;
+
+  getIds().forEach(function(n) {
+    var cant    = parseFloat(g('ccant'+n))  || 0;
+    var precio  = parseFloat(g('cprice'+n)) || 0;
+    var disc    = parseFloat(g('cdisc'+n))  || 0;
+    var ivaStr  = g('civa'+n)   || '0.16';
+    var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+    var retIva  = parseFloat(g('cretiva'+n)) || 0;
+    var retIsr  = parseFloat(g('cretisr'+n)) || 0;
+    var iepsVal = g('cieps'+n)  || '0';
+
+    var sub = cant * precio;
+    var des = sub * (disc / 100);
+    var base = sub - des;
+
+    var mIeps = iepsVal === 'cuota'
+      ? (cant * (parseFloat(g('ccuota'+n)) || 0))
+      : (base * (parseFloat(iepsVal) || 0));
+
+    totSub    += sub;
+    totDes    += des;
+    totIva    += base * iva;
+    totIeps   += mIeps;
+    totRetIva += base * retIva;
+    totRetIsr += base * retIsr;
   });
-  var neto=sub-des;
-  document.getElementById('t-sub').textContent=fmt(sub);
-  document.getElementById('t-des').textContent=fmt(des);
-  document.getElementById('t-neto').textContent=fmt(neto);
+
+  var base  = totSub - totDes;
+  var total = base + totIva + totIeps - totRetIva - totRetIsr;
+
+  /* Actualizar totbox con desglose completo */
+  var totbox = document.querySelector('.totbox');
+  if (!totbox) return;
+
+  var rows = [];
+  rows.push({l:'Subtotal', v: fmt(totSub)});
+  if (totDes > 0.001) rows.push({l:'Descuento', v: '−'+fmt(totDes)});
+  if (totDes > 0.001) rows.push({l:'Base', v: fmt(base)});
+  if (totIva    > 0.001) rows.push({l:'IVA', v: fmt(totIva)});
+  if (totIeps   > 0.001) rows.push({l:'IEPS', v: fmt(totIeps)});
+  if (totRetIva > 0.001) rows.push({l:'Ret. IVA', v: '−'+fmt(totRetIva)});
+  if (totRetIsr > 0.001) rows.push({l:'Ret. ISR', v: '−'+fmt(totRetIsr)});
+
+  var html = rows.map(function(r){
+    return '<div class="trow"><span>'+r.l+'</span><span>'+r.v+'</span></div>';
+  }).join('');
+  html += '<div class="trow grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
+
+  totbox.innerHTML = html;
 }
 
-function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function fmt(n) {
+  return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 
-function recolectarConceptos(){
-  var conceptos=[];
-  getIds().forEach(function(n){
-    var desc=g('cdesc'+n)||'';
-    var clave=g('sm'+n)||'';
-    var unidad=g('cunit'+n)||'E48';
-    var cant=parseFloat(g('ccant'+n))||0;
-    var price=parseFloat(g('cprice'+n))||0;
-    var disc=parseFloat(g('cdisc'+n))||0;
-    var base=cant*price, descV=base*(disc/100), importe=base-descV;
+/* ================================================================
+   RECOLECTAR CONCEPTOS — Payload completo con impuestos
+================================================================ */
+function recolectarConceptos() {
+  var conceptos = [];
+  getIds().forEach(function(n) {
+    var desc    = g('cdesc'+n)  || '';
+    var clave   = g('sm'+n)     || '';
+    var unidad  = g('cunit'+n)  || 'E48';
+    var cant    = parseFloat(g('ccant'+n))  || 0;
+    var precio  = parseFloat(g('cprice'+n)) || 0;
+    var disc    = parseFloat(g('cdisc'+n))  || 0;
+    var ivaStr  = g('civa'+n)   || '0.16';
+    var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+    var retIva  = parseFloat(g('cretiva'+n)) || 0;
+    var retIsr  = parseFloat(g('cretisr'+n)) || 0;
+    var iepsVal = g('cieps'+n)  || '0';
+    var cuota   = parseFloat(g('ccuota'+n)) || 0;
+
+    var sub     = cant * precio;
+    var descV   = sub * (disc / 100);
+    var base    = sub - descV;
+    var mIeps   = iepsVal === 'cuota' ? (cant * cuota) : (base * (parseFloat(iepsVal) || 0));
+    var mIva    = base * iva;
+    var mRetIva = base * retIva;
+    var mRetIsr = base * retIsr;
+    var total   = base + mIva + mIeps - mRetIva - mRetIsr;
+
     conceptos.push({
-      descripcion:desc,
-      clave_sat:clave,
-      clave_unidad:unidad,
-      unidad_nombre:UNIDADES[unidad]||unidad,
-      cantidad:cant,
-      precio_unitario:parseFloat(price.toFixed(2)),
-      descuento_pct:disc,
-      descuento_monto:parseFloat(descV.toFixed(2)),
-      importe:parseFloat(importe.toFixed(2))
+      descripcion:           desc,
+      clave_sat:             clave,
+      clave_unidad:          unidad,
+      unidad_nombre:         UNIDADES[unidad] || unidad,
+      cantidad:              cant,
+      precio_unitario:       parseFloat(precio.toFixed(2)),
+      descuento_pct:         disc,
+      descuento_monto:       parseFloat(descV.toFixed(2)),
+      importe:               parseFloat(base.toFixed(2)),
+      iva:                   ivaStr,
+      iva_tasa:              iva,
+      iva_monto:             parseFloat(mIva.toFixed(2)),
+      retencion_iva:         retIva,
+      retencion_iva_monto:   parseFloat(mRetIva.toFixed(2)),
+      retencion_isr:         retIsr,
+      retencion_isr_monto:   parseFloat(mRetIsr.toFixed(2)),
+      ieps_tipo:             iepsVal === 'cuota' ? 'cuota' : 'porcentaje',
+      ieps_tasa:             iepsVal === 'cuota' ? null : parseFloat(iepsVal),
+      ieps_cuota_por_unidad: iepsVal === 'cuota' ? cuota : null,
+      ieps_monto:            parseFloat(mIeps.toFixed(2)),
+      total:                 parseFloat(total.toFixed(2))
     });
   });
   return conceptos;
@@ -527,105 +911,128 @@ function recolectarConceptos(){
 /* ================================================================
    RESUMEN
 ================================================================ */
-function armarResumen(){
-  var nombres={factura:'Factura de Ingreso',pago:'Complemento de Pago'};
-  var mp=document.querySelector('input[name=metodo]:checked');
-  var mon=document.querySelector('input[name=moneda]:checked');
-  var rows=[
-    {l:'Tipo de CFDI',v:nombres[tipo]||tipo,big:true,full:true},
-    {l:'RFC Emisor',v:g('rfc_emisor')},{l:'Correo Emisor',v:g('email_emisor')},
-    {l:'RFC Receptor',v:g('rfc_receptor')},{l:'Razon Social Receptor',v:g('nombre_receptor')},
-    {l:'CP Fiscal Receptor',v:g('cp_receptor')},{l:'Regimen Fiscal',v:g('regimen_receptor')},
-    {l:'Uso del CFDI',v:g('uso_cfdi')}
+function armarResumen() {
+  var nombres = {factura:'Factura de Ingreso', pago:'Complemento de Pago'};
+  var mp  = document.querySelector('input[name=metodo]:checked');
+  var mon = document.querySelector('input[name=moneda]:checked');
+  var rows = [
+    {l:'Tipo de CFDI',       v: nombres[tipo]||tipo, big:true, full:true},
+    {l:'RFC Emisor',         v: g('rfc_emisor')},
+    {l:'Correo Emisor',      v: g('email_emisor')},
+    {l:'RFC Receptor',       v: g('rfc_receptor')},
+    {l:'Razon Social',       v: g('nombre_receptor')},
+    {l:'CP Fiscal Receptor', v: g('cp_receptor')},
+    {l:'Regimen Fiscal',     v: g('regimen_receptor')},
+    {l:'Uso del CFDI',       v: g('uso_cfdi')}
   ];
-  if(tipo==='pago'){
-    rows.push({l:'UUID Factura Original',v:g('uuid_origen'),full:true});
-    rows.push({l:'Fecha Pago',v:g('fecha_pago')},{l:'Monto Pagado',v:'$'+parseFloat(g('monto_pago')||0).toFixed(2)});
-    rows.push({l:'Parcialidad No.',v:g('num_parcialidad')},{l:'Saldo Anterior',v:'$'+parseFloat(g('saldo_anterior')||0).toFixed(2)});
+  if (tipo === 'pago') {
+    rows.push({l:'UUID Factura Original', v:g('uuid_origen'), full:true});
+    rows.push({l:'Fecha Pago',  v:g('fecha_pago')});
+    rows.push({l:'Monto',       v:'$'+parseFloat(g('monto_pago')||0).toFixed(2)});
+    rows.push({l:'Parcialidad', v:g('num_parcialidad')});
+    rows.push({l:'Saldo Anterior', v:'$'+parseFloat(g('saldo_anterior')||0).toFixed(2)});
   } else {
-    rows.push({l:'Conceptos',v:document.querySelectorAll('.conc').length+' concepto(s)'});
-    rows.push({l:'Subtotal',v:document.getElementById('t-neto').textContent,big:true,full:true});
-    rows.push({l:'Metodo de Pago',v:mp?mp.value:''},{l:'Forma de Pago',v:g('forma_pago')});
-    rows.push({l:'Moneda',v:mon?mon.value:'MXN'});
+    var totEl = document.querySelector('.trow.grand span:last-child');
+    rows.push({l:'Conceptos', v:document.querySelectorAll('.conc').length+' concepto(s)'});
+    rows.push({l:'Total',     v: totEl ? totEl.textContent : '—', big:true, full:true});
+    rows.push({l:'Metodo de Pago', v:mp?mp.value:''});
+    rows.push({l:'Forma de Pago',  v:g('forma_pago')});
+    rows.push({l:'Moneda',         v:mon?mon.value:'MXN'});
   }
-  var html='';
+  var html = '';
   rows.forEach(function(d){
-    html+='<div class="ri'+(d.full?' full':'')+'"><div class="ril">'+d.l+'</div><div class="riv'+(d.big?' big':'')+'">'+(d.v||'\u2014')+'</div></div>';
+    html += '<div class="ri'+(d.full?' full':'')+'"><div class="ril">'+d.l+'</div>' +
+            '<div class="riv'+(d.big?' big':'')+'">'+(d.v||'—')+'</div></div>';
   });
-  document.getElementById('resumen').innerHTML=html;
+  document.getElementById('resumen').innerHTML = html;
 }
 
 /* ================================================================
    ENVIAR
 ================================================================ */
-function enviar(){
-  if(!document.getElementById('acepto').checked){alert('Debes aceptar los terminos para continuar.');return;}
-  var folio='FAC-'+new Date().getFullYear()+'-'+(Math.floor(Math.random()*90000)+10000);
-  var mp=document.querySelector('input[name=metodo]:checked');
-  var mon=document.querySelector('input[name=moneda]:checked');
-  var moncp=document.querySelector('input[name=mon_cp]:checked');
-
-  /* Captura numero WhatsApp del parametro ?wa= en la URL */
+function enviar() {
+  if (!document.getElementById('acepto').checked) {
+    alert('Debes aceptar los terminos para continuar.');
+    return;
+  }
+  var folio = 'FAC-'+new Date().getFullYear()+'-'+(Math.floor(Math.random()*90000)+10000);
+  var mp    = document.querySelector('input[name=metodo]:checked');
+  var mon   = document.querySelector('input[name=moneda]:checked');
+  var moncp = document.querySelector('input[name=mon_cp]:checked');
   var waNum = new URLSearchParams(window.location.search).get('wa') || '';
 
-  var data={
-    folio:folio,
-    timestamp:new Date().toISOString(),
-    tipo_cfdi:tipo,
-    whatsapp:waNum,
-    emisor:{rfc:g('rfc_emisor'), email:g('email_emisor')},
-    receptor:{
-      rfc:g('rfc_receptor'),
-      nombre:g('nombre_receptor'),
-      cp_fiscal:g('cp_receptor'),
-      regimen_fiscal:g('regimen_receptor'),
-      uso_cfdi:g('uso_cfdi'),
-      email:g('email_receptor')
+  var data = {
+    folio:     folio,
+    timestamp: new Date().toISOString(),
+    tipo_cfdi: tipo,
+    whatsapp:  waNum,
+    emisor: {
+      rfc:   g('rfc_emisor'),
+      email: g('email_emisor')
+    },
+    receptor: {
+      rfc:            g('rfc_receptor'),
+      nombre:         g('nombre_receptor'),
+      cp_fiscal:      g('cp_receptor'),
+      regimen_fiscal: g('regimen_receptor'),
+      uso_cfdi:       g('uso_cfdi'),
+      email:          g('email_receptor')
     }
   };
 
-  if(tipo==='pago'){
-    var saldoAnt=parseFloat(g('saldo_anterior'))||0;
-    var montoPag=parseFloat(g('monto_pago'))||0;
-    data.complemento_pago={
-      fecha:g('fecha_pago'),
-      forma_pago:g('forma_pago_cp'),
-      monto:montoPag.toFixed(2),
-      moneda:moncp?moncp.value:'MXN',
-      num_operacion:g('num_operacion'),
-      documentos_relacionados:[{
-        uuid:g('uuid_origen'),
-        serie:g('serie_origen'),
-        folio:g('folio_origen'),
-        metodo_pago:'PPD',
-        num_parcialidad:parseInt(g('num_parcialidad'))||1,
-        saldo_anterior:saldoAnt.toFixed(2),
-        monto_pagado:montoPag.toFixed(2),
-        saldo_insoluto:Math.max(0,saldoAnt-montoPag).toFixed(2)
+  if (tipo === 'pago') {
+    var saldoAnt = parseFloat(g('saldo_anterior')) || 0;
+    var montoPag = parseFloat(g('monto_pago'))     || 0;
+    data.complemento_pago = {
+      fecha:        g('fecha_pago'),
+      forma_pago:   g('forma_pago_cp'),
+      monto:        montoPag.toFixed(2),
+      moneda:       moncp ? moncp.value : 'MXN',
+      num_operacion: g('num_operacion'),
+      documentos_relacionados: [{
+        uuid:            g('uuid_origen'),
+        serie:           g('serie_origen'),
+        folio:           g('folio_origen'),
+        metodo_pago:     'PPD',
+        num_parcialidad: parseInt(g('num_parcialidad')) || 1,
+        saldo_anterior:  saldoAnt.toFixed(2),
+        monto_pagado:    montoPag.toFixed(2),
+        saldo_insoluto:  Math.max(0, saldoAnt - montoPag).toFixed(2)
       }]
     };
   } else {
-    data.conceptos=recolectarConceptos();
-    data.totales={
-      subtotal:document.getElementById('t-sub').textContent,
-      descuento:document.getElementById('t-des').textContent,
-      neto:document.getElementById('t-neto').textContent
+    var conceptos = recolectarConceptos();
+    var totEl = document.querySelector('.trow.grand span:last-child');
+    data.conceptos = conceptos;
+    data.totales = {
+      subtotal:    document.querySelectorAll('.trow')[0] ? document.querySelectorAll('.trow')[0].querySelector('span:last-child').textContent : '',
+      total:       totEl ? totEl.textContent : ''
     };
-    data.pago={
-      metodo:mp?mp.value:'PUE',
-      forma:g('forma_pago'),
-      moneda:mon?mon.value:'MXN',
-      tipo_cambio:g('tipo_cambio'),
-      referencia:g('referencia'),
-      notas:g('notas')
+    data.pago = {
+      metodo:      mp  ? mp.value  : 'PUE',
+      forma:       g('forma_pago'),
+      moneda:      mon ? mon.value : 'MXN',
+      tipo_cambio: g('tipo_cambio'),
+      referencia:  g('referencia'),
+      notas:       g('notas')
     };
   }
 
-  fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
-    .catch(function(){console.warn('Webhook no configurado aun');});
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  }).catch(function(){ console.warn('Webhook no configurado aun'); });
 
-  for(var i=1;i<=5;i++){ var c=document.getElementById('card'+i); if(c)c.classList.remove('active'); }
+  /* Ocultar cards y mostrar éxito */
+  for (var i=1; i<=5; i++) {
+    var c = document.getElementById('card'+i);
+    if (c) c.classList.remove('active');
+  }
   document.getElementById('success').classList.add('active');
-  document.getElementById('folio-num').textContent=folio;
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('folio-num').textContent = folio;
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  /* Limpiar borrador */
+  clearStorage();
 }
