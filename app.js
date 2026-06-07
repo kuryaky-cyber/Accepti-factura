@@ -1,13 +1,13 @@
 /* ================================================================
    ACCEPTI CONTADORES — FORMULARIO CFDI 4.0
-   app.js v6.0 — Selectores de impuestos completos + Memoria local
+   app.js v7.0 — Retenciones inteligentes por tipo de actividad
 
    Reemplaza antes de subir a producción:
    WEBHOOK_URL -> URL del escenario de Factura en Make
 ================================================================ */
 
 var WEBHOOK_URL = 'https://hook.us2.make.com/scr4cut77aypoff1uypc7hh8byby1kcn';
-var STORAGE_KEY = 'accepti_cfdi_v6';
+var STORAGE_KEY = 'accepti_cfdi_v7';
 
 var FLUJOS = {
   factura: [1,2,3,4,5],
@@ -26,9 +26,24 @@ var tipo  = '';
 var flujo = [];
 var fpos  = 0;
 var nc    = 0;
+var receptorEsPM = false; // true = Persona Moral (RFC 12 chars)
 
 /* ================================================================
-   CATÁLOGO SAT LOCAL (resultados rápidos mientras carga la API)
+   TABLA DE RETENCIONES POR TIPO DE ACTIVIDAD
+   Fuente: Art. 1-A LIVA + Art. 96/97 LISR
+================================================================ */
+var RETENCIONES = {
+  'ninguna':     { retiva: 0,        retisr: 0,      label: 'Sin retención' },
+  'hon_resico':  { retiva: 0.106667, retisr: 0.0125, label: 'Honorarios / Arrend. — PF RESICO (ISR 1.25% + IVA 10.667%)' },
+  'hon_general': { retiva: 0.106667, retisr: 0.10,   label: 'Honorarios / Arrend. — PF General (ISR 10% + IVA 10.667%)' },
+  'emp_resico':  { retiva: 0,        retisr: 0.0125, label: 'Actividad Empresarial — PF RESICO (ISR 1.25%)' },
+  'fletes':      { retiva: 0.04,     retisr: 0,      label: 'Fletes / Autotransporte (IVA 4%)' },
+  'comisiones':  { retiva: 0.106667, retisr: 0,      label: 'Comisiones (IVA 10.667%)' },
+  'desperdicios':{ retiva: 1.00,     retisr: 0,      label: 'Desperdicios (IVA 100%)' }
+};
+
+/* ================================================================
+   CATÁLOGO SAT LOCAL
 ================================================================ */
 var SAT = [
   {c:"84111506",d:"Servicios de contabilidad",k:"Contabilidad",u:"E48"},
@@ -113,14 +128,18 @@ var UNIDADES = {
 };
 
 /* ================================================================
-   ESTILOS DINÁMICOS — Campos de impuestos por concepto
+   ESTILOS DINÁMICOS
 ================================================================ */
 (function injectStyles() {
   var s = document.createElement('style');
   s.textContent =
-    '.taxgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)}' +
+    '.taxgrid{display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1.5px dashed var(--border)}' +
     '.taxgrid .f label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}' +
     '.taxgrid select,.taxgrid input{padding:7px 9px;font-size:12px}' +
+    '.ret-preview{font-size:10px;color:var(--teal2);margin-top:4px;font-weight:600;min-height:14px}' +
+    '.receptor-tipo{font-size:11px;font-weight:600;margin-top:4px;padding:3px 8px;border-radius:4px;display:inline-block}' +
+    '.receptor-tipo.pm{color:#fff;background:var(--teal2)}' +
+    '.receptor-tipo.pf{color:var(--muted);background:var(--lite)}' +
     '.cuota-row{display:none;margin-top:6px;padding:8px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.3);border-radius:6px}' +
     '.cuota-row.visible{display:block}' +
     '.cuota-row label{color:var(--yellow)!important}' +
@@ -134,7 +153,7 @@ var UNIDADES = {
 })();
 
 /* ================================================================
-   MEMORIA LOCAL — Guardar y restaurar borrador automáticamente
+   MEMORIA LOCAL
 ================================================================ */
 function saveToStorage() {
   try {
@@ -167,8 +186,7 @@ function saveToStorage() {
         cprice:  g('cprice'+n),
         cdisc:   g('cdisc'+n),
         civa:    g('civa'+n),
-        cretiva: g('cretiva'+n),
-        cretisr: g('cretisr'+n),
+        cretipo: g('ctipret'+n) || 'ninguna',
         cieps:   g('cieps'+n),
         ccuota:  g('ccuota'+n) || ''
       });
@@ -202,6 +220,10 @@ function restoreFromStorage() {
       }
     });
 
+    // Detectar tipo receptor al restaurar
+    var rfcRec = document.getElementById('rfc_receptor');
+    if (rfcRec) actualizarTipoReceptor(rfcRec.value);
+
     if (draft.conceptos && draft.conceptos.length > 0) {
       document.getElementById('conc-list').innerHTML = '';
       nc = 0;
@@ -222,8 +244,7 @@ function restoreFromStorage() {
         if (c.cprice)  { var e3=document.getElementById('cprice'+n);  if(e3) e3.value=c.cprice; }
         if (c.cdisc)   { var e4=document.getElementById('cdisc'+n);   if(e4) e4.value=c.cdisc; }
         if (c.civa)    { var e5=document.getElementById('civa'+n);    if(e5) e5.value=c.civa; }
-        if (c.cretiva) { var e6=document.getElementById('cretiva'+n); if(e6) e6.value=c.cretiva; }
-        if (c.cretisr) { var e7=document.getElementById('cretisr'+n); if(e7) e7.value=c.cretisr; }
+        if (c.cretipo) { var e6=document.getElementById('ctipret'+n); if(e6){ e6.value=c.cretipo; aplicarTipoRetencion(n); } }
         if (c.cieps)   { var e8=document.getElementById('cieps'+n);   if(e8){ e8.value=c.cieps; toggleCuota(n); } }
         if (c.ccuota)  { var e9=document.getElementById('ccuota'+n);  if(e9) e9.value=c.ccuota; }
         calcConc(n);
@@ -254,6 +275,54 @@ function showRestoreBanner() {
 function limpiarBorrador() {
   clearStorage();
   window.location.reload();
+}
+
+/* ================================================================
+   DETECCIÓN TIPO RECEPTOR (PM=12 chars / PF=13 chars)
+================================================================ */
+function actualizarTipoReceptor(rfc) {
+  var rfcClean = (rfc || '').trim().toUpperCase();
+  receptorEsPM = (rfcClean.length === 12);
+
+  var hint = document.getElementById('receptor-tipo-hint');
+  if (hint) {
+    if (rfcClean.length === 12) {
+      hint.textContent = '✓ Persona Moral — pueden aplicar retenciones';
+      hint.className = 'receptor-tipo pm';
+    } else if (rfcClean.length === 13) {
+      hint.textContent = '✓ Persona Física';
+      hint.className = 'receptor-tipo pf';
+    } else {
+      hint.textContent = '';
+      hint.className = 'receptor-tipo';
+    }
+  }
+}
+
+/* ================================================================
+   APLICAR TIPO DE RETENCIÓN — auto-llena tasas ocultas
+================================================================ */
+function aplicarTipoRetencion(n) {
+  var tipoRet = g('ctipret'+n) || 'ninguna';
+  var cfg = RETENCIONES[tipoRet] || RETENCIONES['ninguna'];
+
+  var elRetIva = document.getElementById('cretiva'+n);
+  var elRetIsr = document.getElementById('cretisr'+n);
+  if (elRetIva) elRetIva.value = cfg.retiva;
+  if (elRetIsr) elRetIsr.value = cfg.retisr;
+
+  // Mostrar preview de tasas aplicadas
+  var preview = document.getElementById('ret-preview'+n);
+  if (preview) {
+    if (tipoRet === 'ninguna') {
+      preview.textContent = '';
+    } else {
+      var parts = [];
+      if (cfg.retisr > 0) parts.push('ISR ' + (cfg.retisr * 100).toFixed(2).replace(/\.?0+$/, '') + '%');
+      if (cfg.retiva > 0) parts.push('IVA ret. ' + (cfg.retiva * 100).toFixed(3).replace(/\.?0+$/, '') + '%');
+      preview.textContent = parts.length ? '→ ' + parts.join(' + ') : '';
+    }
+  }
 }
 
 /* ================================================================
@@ -289,6 +358,15 @@ document.addEventListener('DOMContentLoaded', function() {
   addUpper('rfc_emisor','rfc_emisor');
   addUpper('rfc_receptor','rfc_receptor');
   addUpper('nombre_receptor','nombre_receptor');
+
+  // Detección PM/PF al escribir RFC receptor
+  var rfcRecEl = document.getElementById('rfc_receptor');
+  if (rfcRecEl) {
+    rfcRecEl.addEventListener('input', function(){
+      actualizarTipoReceptor(this.value);
+      saveToStorage();
+    });
+  }
 
   var autoSaveFields = [
     'email_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
@@ -490,7 +568,7 @@ function clrE(id){ var el=document.getElementById(id); if(el)el.classList.remove
 function g(id){ var el=document.getElementById(id); return el ? el.value : ''; }
 
 /* ================================================================
-   CONCEPTOS — Con selectores de impuestos completos
+   CONCEPTOS
 ================================================================ */
 function addConc() {
   nc++;
@@ -498,6 +576,11 @@ function addConc() {
 
   var unitsHtml = Object.keys(UNIDADES).map(function(k){
     return '<option value="'+k+'"'+(k==='E48'?' selected':'')+'>'+UNIDADES[k]+'</option>';
+  }).join('');
+
+  // Opciones de tipo de retención
+  var tipRetOpts = Object.keys(RETENCIONES).map(function(k){
+    return '<option value="'+k+'">'+RETENCIONES[k].label+'</option>';
   }).join('');
 
   var div = document.createElement('div');
@@ -529,11 +612,11 @@ function addConc() {
 
   document.getElementById('conc-list').appendChild(div);
 
-  /* ---- Sección de impuestos ---- */
+  /* ---- Grid de impuestos: 3 columnas ---- */
   var taxgrid = document.createElement('div');
   taxgrid.className = 'taxgrid';
 
-  /* IVA */
+  /* Columna 1: IVA */
   var fIva = document.createElement('div'); fIva.className = 'f';
   fIva.innerHTML =
     '<label>IVA</label>' +
@@ -545,30 +628,19 @@ function addConc() {
     '</select>';
   taxgrid.appendChild(fIva);
 
-  /* Retención IVA */
-  var fRetIva = document.createElement('div'); fRetIva.className = 'f';
-  fRetIva.innerHTML =
-    '<label>Ret. IVA</label>' +
-    '<select id="cretiva'+n+'">' +
-      '<option value="0">Sin retención</option>' +
-      '<option value="0.1067">10.67% — Honorarios (PF a PM)</option>' +
-      '<option value="0.10">10% — Arrendamiento (PF a PM)</option>' +
-      '<option value="0.04">4% — Autotransporte (PF a PM)</option>' +
-    '</select>';
-  taxgrid.appendChild(fRetIva);
+  /* Columna 2: Tipo de retención (reemplaza los 2 dropdowns anteriores) */
+  var fTipRet = document.createElement('div'); fTipRet.className = 'f';
+  fTipRet.innerHTML =
+    '<label>Tipo de retención' +
+      (receptorEsPM ? ' <span style="color:var(--teal2);font-weight:700">● Receptor PM</span>' : '') +
+    '</label>' +
+    '<select id="ctipret'+n+'">' + tipRetOpts + '</select>' +
+    '<div class="ret-preview" id="ret-preview'+n+'"></div>' +
+    '<input type="hidden" id="cretiva'+n+'" value="0">' +
+    '<input type="hidden" id="cretisr'+n+'" value="0">';
+  taxgrid.appendChild(fTipRet);
 
-  /* Retención ISR */
-  var fRetIsr = document.createElement('div'); fRetIsr.className = 'f';
-  fRetIsr.innerHTML =
-    '<label>Ret. ISR</label>' +
-    '<select id="cretisr'+n+'">' +
-      '<option value="0">Sin retención</option>' +
-      '<option value="0.10">10% — Honorarios / Arrendamiento</option>' +
-      '<option value="0.0125">1.25% — Caso específico</option>' +
-    '</select>';
-  taxgrid.appendChild(fRetIsr);
-
-  /* IEPS */
+  /* Columna 3: IEPS */
   var fIeps = document.createElement('div'); fIeps.className = 'f';
   fIeps.innerHTML =
     '<label>IEPS</label>' +
@@ -584,7 +656,7 @@ function addConc() {
 
   div.appendChild(taxgrid);
 
-  /* Campo cuota IEPS — solo visible para combustibles */
+  /* Campo cuota IEPS */
   var cuotaRow = document.createElement('div');
   cuotaRow.className = 'cuota-row'; cuotaRow.id = 'cuota-row'+n;
   cuotaRow.innerHTML =
@@ -593,7 +665,7 @@ function addConc() {
       '<div class="pfx"><span class="pfxl">$</span>' +
         '<input type="number" id="ccuota'+n+'" placeholder="6.25" min="0" step="0.0001">' +
       '</div>' +
-      '<span class="hint">Consulta la cuota vigente en el SAT cada mes (varía). Ej. gasolina magna ≈ $6.25/L</span>' +
+      '<span class="hint">Consulta la cuota vigente en el SAT cada mes. Ej. gasolina magna ≈ $6.25/L</span>' +
     '</div>';
   div.appendChild(cuotaRow);
 
@@ -620,11 +692,12 @@ function addConc() {
       }
     });
 
-    ['civa','cretiva','cretisr'].forEach(function(prefix){
-      var el = document.getElementById(prefix+nn);
-      if (el) {
-        el.addEventListener('change', function(){ calcConc(nn); saveToStorage(); });
-      }
+    document.getElementById('civa'+nn).addEventListener('change', function(){
+      calcConc(nn); saveToStorage();
+    });
+
+    document.getElementById('ctipret'+nn).addEventListener('change', function(){
+      aplicarTipoRetencion(nn); calcConc(nn); saveToStorage();
     });
 
     document.getElementById('cieps'+nn).addEventListener('change', function(){
@@ -650,8 +723,8 @@ function rmConc(n) {
    TOGGLE CUOTA IEPS
 ================================================================ */
 function toggleCuota(n) {
-  var iepsEl    = document.getElementById('cieps'+n);
-  var cuotaRow  = document.getElementById('cuota-row'+n);
+  var iepsEl   = document.getElementById('cieps'+n);
+  var cuotaRow = document.getElementById('cuota-row'+n);
   if (!iepsEl || !cuotaRow) return;
   if (iepsEl.value === 'cuota') cuotaRow.classList.add('visible');
   else cuotaRow.classList.remove('visible');
@@ -773,9 +846,9 @@ function calcConc(n) {
   var retIsr  = parseFloat(g('cretisr'+n)) || 0;
   var iepsVal = g('cieps'+n)  || '0';
 
-  var subtotal = cant * precio;
+  var subtotal  = cant * precio;
   var descuento = subtotal * (disc / 100);
-  var base = subtotal - descuento;
+  var base      = subtotal - descuento;
 
   var montoIeps = 0;
   if (iepsVal === 'cuota') {
@@ -794,7 +867,7 @@ function calcConc(n) {
 }
 
 /* ================================================================
-   TOTALES GENERALES DESGLOSADOS
+   TOTALES GENERALES
 ================================================================ */
 function recalc() {
   var totSub=0, totDes=0, totIva=0, totIeps=0, totRetIva=0, totRetIsr=0;
@@ -809,8 +882,8 @@ function recalc() {
     var retIsr  = parseFloat(g('cretisr'+n)) || 0;
     var iepsVal = g('cieps'+n)  || '0';
 
-    var sub = cant * precio;
-    var des = sub * (disc / 100);
+    var sub  = cant * precio;
+    var des  = sub * (disc / 100);
     var base = sub - des;
 
     var mIeps = iepsVal === 'cuota'
@@ -828,14 +901,13 @@ function recalc() {
   var base  = totSub - totDes;
   var total = base + totIva + totIeps - totRetIva - totRetIsr;
 
-  /* Actualizar totbox con desglose completo */
   var totbox = document.querySelector('.totbox');
   if (!totbox) return;
 
   var rows = [];
   rows.push({l:'Subtotal', v: fmt(totSub)});
-  if (totDes > 0.001) rows.push({l:'Descuento', v: '−'+fmt(totDes)});
-  if (totDes > 0.001) rows.push({l:'Base', v: fmt(base)});
+  if (totDes    > 0.001) rows.push({l:'Descuento', v: '−'+fmt(totDes)});
+  if (totDes    > 0.001) rows.push({l:'Base', v: fmt(base)});
   if (totIva    > 0.001) rows.push({l:'IVA', v: fmt(totIva)});
   if (totIeps   > 0.001) rows.push({l:'IEPS', v: fmt(totIeps)});
   if (totRetIva > 0.001) rows.push({l:'Ret. IVA', v: '−'+fmt(totRetIva)});
@@ -854,7 +926,7 @@ function fmt(n) {
 }
 
 /* ================================================================
-   RECOLECTAR CONCEPTOS — Payload completo con impuestos
+   RECOLECTAR CONCEPTOS — Payload completo
 ================================================================ */
 function recolectarConceptos() {
   var conceptos = [];
@@ -871,6 +943,7 @@ function recolectarConceptos() {
     var retIsr  = parseFloat(g('cretisr'+n)) || 0;
     var iepsVal = g('cieps'+n)  || '0';
     var cuota   = parseFloat(g('ccuota'+n)) || 0;
+    var tipoRet = g('ctipret'+n) || 'ninguna';
 
     var sub     = cant * precio;
     var descV   = sub * (disc / 100);
@@ -894,6 +967,7 @@ function recolectarConceptos() {
       iva:                   ivaStr,
       iva_tasa:              iva,
       iva_monto:             parseFloat(mIva.toFixed(2)),
+      retencion_tipo:        tipoRet,
       retencion_iva:         retIva,
       retencion_iva_monto:   parseFloat(mRetIva.toFixed(2)),
       retencion_isr:         retIsr,
@@ -920,6 +994,7 @@ function armarResumen() {
     {l:'RFC Emisor',         v: g('rfc_emisor')},
     {l:'Correo Emisor',      v: g('email_emisor')},
     {l:'RFC Receptor',       v: g('rfc_receptor')},
+    {l:'Tipo Receptor',      v: receptorEsPM ? 'Persona Moral' : 'Persona Física'},
     {l:'Razon Social',       v: g('nombre_receptor')},
     {l:'CP Fiscal Receptor', v: g('cp_receptor')},
     {l:'Regimen Fiscal',     v: g('regimen_receptor')},
@@ -927,9 +1002,9 @@ function armarResumen() {
   ];
   if (tipo === 'pago') {
     rows.push({l:'UUID Factura Original', v:g('uuid_origen'), full:true});
-    rows.push({l:'Fecha Pago',  v:g('fecha_pago')});
-    rows.push({l:'Monto',       v:'$'+parseFloat(g('monto_pago')||0).toFixed(2)});
-    rows.push({l:'Parcialidad', v:g('num_parcialidad')});
+    rows.push({l:'Fecha Pago',     v:g('fecha_pago')});
+    rows.push({l:'Monto',          v:'$'+parseFloat(g('monto_pago')||0).toFixed(2)});
+    rows.push({l:'Parcialidad',    v:g('num_parcialidad')});
     rows.push({l:'Saldo Anterior', v:'$'+parseFloat(g('saldo_anterior')||0).toFixed(2)});
   } else {
     var totEl = document.querySelector('.trow.grand span:last-child');
@@ -976,7 +1051,8 @@ function enviar() {
       cp_fiscal:      g('cp_receptor'),
       regimen_fiscal: g('regimen_receptor'),
       uso_cfdi:       g('uso_cfdi'),
-      email:          g('email_receptor')
+      email:          g('email_receptor'),
+      tipo:           receptorEsPM ? 'PM' : 'PF'
     }
   };
 
@@ -984,10 +1060,10 @@ function enviar() {
     var saldoAnt = parseFloat(g('saldo_anterior')) || 0;
     var montoPag = parseFloat(g('monto_pago'))     || 0;
     data.complemento_pago = {
-      fecha:        g('fecha_pago'),
-      forma_pago:   g('forma_pago_cp'),
-      monto:        montoPag.toFixed(2),
-      moneda:       moncp ? moncp.value : 'MXN',
+      fecha:         g('fecha_pago'),
+      forma_pago:    g('forma_pago_cp'),
+      monto:         montoPag.toFixed(2),
+      moneda:        moncp ? moncp.value : 'MXN',
       num_operacion: g('num_operacion'),
       documentos_relacionados: [{
         uuid:            g('uuid_origen'),
@@ -1005,8 +1081,8 @@ function enviar() {
     var totEl = document.querySelector('.trow.grand span:last-child');
     data.conceptos = conceptos;
     data.totales = {
-      subtotal:    document.querySelectorAll('.trow')[0] ? document.querySelectorAll('.trow')[0].querySelector('span:last-child').textContent : '',
-      total:       totEl ? totEl.textContent : ''
+      subtotal: document.querySelectorAll('.trow')[0] ? document.querySelectorAll('.trow')[0].querySelector('span:last-child').textContent : '',
+      total:    totEl ? totEl.textContent : ''
     };
     data.pago = {
       metodo:      mp  ? mp.value  : 'PUE',
@@ -1024,7 +1100,6 @@ function enviar() {
     body: JSON.stringify(data)
   }).catch(function(){ console.warn('Webhook no configurado aun'); });
 
-  /* Ocultar cards y mostrar éxito */
   for (var i=1; i<=5; i++) {
     var c = document.getElementById('card'+i);
     if (c) c.classList.remove('active');
@@ -1033,6 +1108,5 @@ function enviar() {
   document.getElementById('folio-num').textContent = folio;
   window.scrollTo({top:0, behavior:'smooth'});
 
-  /* Limpiar borrador */
   clearStorage();
 }
