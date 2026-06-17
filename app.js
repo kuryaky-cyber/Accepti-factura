@@ -159,7 +159,7 @@ function saveToStorage() {
   try {
     var draft = { tipo: tipo, campos: {}, conceptos: [] };
     var fields = [
-      'rfc_emisor','email_emisor','regimen_emisor','rfc_receptor','nombre_receptor','cp_receptor',
+      'rfc_emisor','email_emisor','regimen_emisor','cp_emisor','rfc_receptor','nombre_receptor','cp_receptor',
       'regimen_receptor','uso_cfdi','email_receptor','uuid_origen','serie_origen',
       'folio_origen','fecha_pago','monto_pago','num_parcialidad','saldo_anterior',
       'num_operacion','forma_pago','tipo_cambio','referencia','notas'
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   var autoSaveFields = [
-    'email_emisor','regimen_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
+    'email_emisor','regimen_emisor','cp_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
     'uuid_origen','monto_pago','fecha_pago','forma_pago_cp','saldo_anterior',
     'forma_pago','tipo_cambio','referencia','notas','serie_origen','folio_origen',
     'num_operacion','num_parcialidad','email_receptor'
@@ -429,6 +429,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (regimenParam) {
     var regimenEl = document.getElementById('regimen_emisor');
     if (regimenEl) regimenEl.value = regimenParam;
+  }
+
+  // Pre-fill CP fiscal emisor from URL parameter ?cp=
+  var cpParam = new URLSearchParams(window.location.search).get('cp');
+  if (cpParam) {
+    var cpEl = document.getElementById('cp_emisor');
+    if (cpEl) cpEl.value = cpParam;
   }
 });
 
@@ -543,6 +550,7 @@ function validar(step) {
     var em = g('email_emisor').trim();
     if (!em || em.indexOf('@') < 1) { marcarErr('email_emisor'); ok=false; }
     if (!g('regimen_emisor')) { marcarErr('regimen_emisor'); ok=false; }
+    if (g('cp_emisor').trim().length !== 5) { marcarErr('cp_emisor'); ok=false; }
   }
   if (step === 2) {
     if (g('rfc_receptor').trim().length < 12) { marcarErr('rfc_receptor'); ok=false; }
@@ -1011,6 +1019,7 @@ function armarResumen() {
     {l:'Tipo de CFDI',       v: nombres[tipo]||tipo, big:true, full:true},
     {l:'RFC Emisor',         v: g('rfc_emisor')},
     {l:'Regimen Emisor',     v: g('regimen_emisor')},
+    {l:'CP Fiscal Emisor',   v: g('cp_emisor')},
     {l:'Correo Emisor',      v: g('email_emisor')},
     {l:'RFC Receptor',       v: g('rfc_receptor')},
     {l:'Tipo Receptor',      v: receptorEsPM ? 'Persona Moral' : 'Persona Física'},
@@ -1063,7 +1072,8 @@ function enviar() {
     emisor: {
       rfc:            g('rfc_emisor'),
       email:          g('email_emisor'),
-      regimen_fiscal: g('regimen_emisor')
+      regimen_fiscal: g('regimen_emisor'),
+      cp_fiscal:      g('cp_emisor')
     },
     receptor: {
       rfc:            g('rfc_receptor'),
