@@ -159,7 +159,7 @@ function saveToStorage() {
   try {
     var draft = { tipo: tipo, campos: {}, conceptos: [] };
     var fields = [
-      'rfc_emisor','email_emisor','rfc_receptor','nombre_receptor','cp_receptor',
+      'rfc_emisor','email_emisor','regimen_emisor','rfc_receptor','nombre_receptor','cp_receptor',
       'regimen_receptor','uso_cfdi','email_receptor','uuid_origen','serie_origen',
       'folio_origen','fecha_pago','monto_pago','num_parcialidad','saldo_anterior',
       'num_operacion','forma_pago','tipo_cambio','referencia','notas'
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   var autoSaveFields = [
-    'email_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
+    'email_emisor','regimen_emisor','cp_receptor','regimen_receptor','uso_cfdi','nombre_receptor',
     'uuid_origen','monto_pago','fecha_pago','forma_pago_cp','saldo_anterior',
     'forma_pago','tipo_cambio','referencia','notas','serie_origen','folio_origen',
     'num_operacion','num_parcialidad','email_receptor'
@@ -422,6 +422,13 @@ document.addEventListener('DOMContentLoaded', function() {
       rfcEl.value = rfcParam.toUpperCase();
       rfcEl.dispatchEvent(new Event('input'));
     }
+  }
+
+  // Pre-fill regimen fiscal emisor from URL parameter ?regimen=
+  var regimenParam = new URLSearchParams(window.location.search).get('regimen');
+  if (regimenParam) {
+    var regimenEl = document.getElementById('regimen_emisor');
+    if (regimenEl) regimenEl.value = regimenParam;
   }
 });
 
@@ -535,6 +542,7 @@ function validar(step) {
     if (g('rfc_emisor').trim().length < 12) { marcarErr('rfc_emisor'); ok=false; }
     var em = g('email_emisor').trim();
     if (!em || em.indexOf('@') < 1) { marcarErr('email_emisor'); ok=false; }
+    if (!g('regimen_emisor')) { marcarErr('regimen_emisor'); ok=false; }
   }
   if (step === 2) {
     if (g('rfc_receptor').trim().length < 12) { marcarErr('rfc_receptor'); ok=false; }
@@ -1002,6 +1010,7 @@ function armarResumen() {
   var rows = [
     {l:'Tipo de CFDI',       v: nombres[tipo]||tipo, big:true, full:true},
     {l:'RFC Emisor',         v: g('rfc_emisor')},
+    {l:'Regimen Emisor',     v: g('regimen_emisor')},
     {l:'Correo Emisor',      v: g('email_emisor')},
     {l:'RFC Receptor',       v: g('rfc_receptor')},
     {l:'Tipo Receptor',      v: receptorEsPM ? 'Persona Moral' : 'Persona Física'},
@@ -1052,8 +1061,9 @@ function enviar() {
     tipo_cfdi: tipo,
     whatsapp:  waNum,
     emisor: {
-      rfc:   g('rfc_emisor'),
-      email: g('email_emisor')
+      rfc:            g('rfc_emisor'),
+      email:          g('email_emisor'),
+      regimen_fiscal: g('regimen_emisor')
     },
     receptor: {
       rfc:            g('rfc_receptor'),
