@@ -413,6 +413,16 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!restored) addConc();
   renderStepbar();
   if (restored && tipo) showRestoreBanner();
+
+  // Pre-fill emisor RFC from URL parameter ?rfc= (flujo multi-empresa)
+  var rfcParam = new URLSearchParams(window.location.search).get('rfc');
+  if (rfcParam) {
+    var rfcEl = document.getElementById('rfc_emisor');
+    if (rfcEl) {
+      rfcEl.value = rfcParam.toUpperCase();
+      rfcEl.dispatchEvent(new Event('input'));
+    }
+  }
 });
 
 function addUpper(id, errId) {
