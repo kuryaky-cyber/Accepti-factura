@@ -179,7 +179,7 @@ footer a{color:var(--teal);text-decoration:none}
     <div><div class="bname">ACCEPT<em>I</em></div><div class="bsub">Contadores S.C.</div></div>
   </a>
   <div class="hright">
-    <span> <strong> </strong></span>
+    <span>  <strong> </strong></span>
     <a href="https://www.accepti.com.mx" target="_blank">contabilidad@accepti.com.mx</a>
   </div>
 </header>
@@ -249,6 +249,12 @@ footer a{color:var(--teal);text-decoration:none}
       </select>
       <span class="hint">Pre-llenado desde tu expediente. Cambialo si necesitas facturar con otro regimen.</span>
       <span class="emsg" id="e-regimen_emisor">Selecciona un regimen fiscal</span>
+    </div>
+    <div class="f">
+      <label>Codigo Postal Fiscal (Emisor) <span class="r">*</span></label>
+      <input type="text" id="cp_emisor" placeholder="00000" maxlength="5" style="font-family:monospace;letter-spacing:1px">
+      <span class="hint">Pre-llenado desde tu expediente. Actualizalo si tu domicilio fiscal cambio.</span>
+      <span class="emsg" id="e-cp_emisor">CP invalido, debe ser 5 digitos</span>
     </div>
   </div>
   <div class="nav"><span class="stepof" id="sf1"></span><button class="btn btnp" id="btn-n1">Continuar &rarr;</button></div>
