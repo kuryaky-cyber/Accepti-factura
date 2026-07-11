@@ -121,10 +121,10 @@ var SAT = [
 ];
 
 var UNIDADES = {
-  'E48':'E48 - Servicio','H87':'H87 - Pieza','KGM':'KGM - Kilogramo',
-  'LTR':'LTR - Litro','MTR':'MTR - Metro','ACT':'ACT - Actividad',
-  'MTS':'MTS - Metro cuadrado','TON':'TON - Tonelada',
-  'XBX':'XBX - Caja','XPK':'XPK - Paquete','GRM':'GRM - Gramo'
+  'E48':'Servicio','H87':'Pieza','KGM':'Kilogramo',
+  'LTR':'Litro','MTR':'Metro','ACT':'Actividad',
+  'MTS':'Metro cuadrado','TON':'Tonelada',
+  'XBX':'Caja','XPK':'Paquete','GRM':'Gramo'
 };
 
 /* ================================================================
@@ -601,7 +601,7 @@ function addConc() {
   var n = nc;
 
   var unitsHtml = Object.keys(UNIDADES).map(function(k){
-    return '<option value="'+k+'"'+(k==='E48'?' selected':'')+'>'+UNIDADES[k]+'</option>';
+    return '<option value="'+k+'"'+(k==='E48'?' selected':'')+'>'+k+' - '+UNIDADES[k]+'</option>';
   }).join('');
 
   // Opciones de tipo de retención
@@ -1100,12 +1100,27 @@ function enviar() {
   if (tipo === 'pago') {
     var saldoAnt = parseFloat(g('saldo_anterior')) || 0;
     var montoPag = parseFloat(g('monto_pago'))     || 0;
+
+    // --- ImpuestosDR del documento relacionado (segun el IVA de la factura que se paga) ---
+    var drIvaStr  = g('dr_iva') || '0.16';
+    var drRate    = (drIvaStr === 'exento' || drIvaStr === 'no_objeto') ? 0 : (parseFloat(drIvaStr) || 0);
+    var drAplica  = (drIvaStr !== 'no_objeto') ? 1 : 0;
+    var drNombre  = drIvaStr === 'exento' ? 'IVA Exento' : (drAplica ? 'IVA' : '');
+    var drObjeto  = drAplica ? '02' : '01';
+    var drBase    = drRate > 0 ? +(montoPag / (1 + drRate)).toFixed(2) : +montoPag.toFixed(2);
+    var drImporte = drRate > 0 ? +(montoPag - drBase).toFixed(2) : 0;
+    var drTaxes   = drAplica
+      ? ',"Taxes":[{"Name":"' + drNombre + '","Rate":"' + drRate + '","Total":"' + drImporte.toFixed(2) + '","Base":"' + drBase.toFixed(2) + '","IsRetention":"false"}]'
+      : '';
+
     data.complemento_pago = {
       fecha:         g('fecha_pago'),
       forma_pago:    g('forma_pago_cp'),
       monto:         montoPag.toFixed(2),
       moneda:        moncp ? moncp.value : 'MXN',
       num_operacion: g('num_operacion'),
+      dr_objeto_imp: drObjeto,
+      dr_taxes:      drTaxes,
       documentos_relacionados: [{
         uuid:            g('uuid_origen'),
         serie:           g('serie_origen'),
