@@ -651,6 +651,7 @@ function addConc() {
       '<option value="0.08">8% — Zona fronteriza</option>' +
       '<option value="0">0% — Alimentos/Medicamentos</option>' +
       '<option value="exento">Exento — Serv. medicos, educacion</option>' +
+      '<option value="no_objeto">No objeto de impuesto (01)</option>' +
     '</select>';
   taxgrid.appendChild(fIva);
 
@@ -867,7 +868,7 @@ function calcConc(n) {
   var precio  = parseFloat(g('cprice'+n)) || 0;
   var disc    = parseFloat(g('cdisc'+n))  || 0;
   var ivaStr  = g('civa'+n)   || '0.16';
-  var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+  var iva     = (ivaStr === 'exento' || ivaStr === 'no_objeto') ? 0 : (parseFloat(ivaStr) || 0);
   var retIva  = parseFloat(g('cretiva'+n)) || 0;
   var retIsr  = parseFloat(g('cretisr'+n)) || 0;
   var iepsVal = g('cieps'+n)  || '0';
@@ -903,7 +904,7 @@ function recalc() {
     var precio  = parseFloat(g('cprice'+n)) || 0;
     var disc    = parseFloat(g('cdisc'+n))  || 0;
     var ivaStr  = g('civa'+n)   || '0.16';
-    var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+    var iva     = (ivaStr === 'exento' || ivaStr === 'no_objeto') ? 0 : (parseFloat(ivaStr) || 0);
     var retIva  = parseFloat(g('cretiva'+n)) || 0;
     var retIsr  = parseFloat(g('cretisr'+n)) || 0;
     var iepsVal = g('cieps'+n)  || '0';
@@ -964,7 +965,7 @@ function recolectarConceptos() {
     var precio  = parseFloat(g('cprice'+n)) || 0;
     var disc    = parseFloat(g('cdisc'+n))  || 0;
     var ivaStr  = g('civa'+n)   || '0.16';
-    var iva     = ivaStr === 'exento' ? 0 : (parseFloat(ivaStr) || 0);
+    var iva     = (ivaStr === 'exento' || ivaStr === 'no_objeto') ? 0 : (parseFloat(ivaStr) || 0);
     var retIva  = parseFloat(g('cretiva'+n)) || 0;
     var retIsr  = parseFloat(g('cretisr'+n)) || 0;
     var iepsVal = g('cieps'+n)  || '0';
@@ -980,6 +981,13 @@ function recolectarConceptos() {
     var mRetIsr = base * retIsr;
     var total   = base + mIva + mIeps - mRetIva - mRetIsr;
 
+    // --- Clasificacion fiscal del IVA (ObjetoImp + TipoFactor) ---
+    var ivaAplica = (ivaStr !== 'no_objeto') ? 1 : 0;            // 16/8/0/exento => hay traslado de IVA
+    var ivaNombre = ivaStr === 'exento' ? 'IVA Exento'
+                                        : (ivaAplica ? 'IVA' : '');
+    var hayImpuesto = ivaAplica || retIva > 0 || retIsr > 0 || mIeps > 0;
+    var objetoImp = hayImpuesto ? '02' : '01';                   // 02 = Si objeto, 01 = No objeto
+
     conceptos.push({
       descripcion:           desc,
       clave_sat:             clave,
@@ -993,6 +1001,9 @@ function recolectarConceptos() {
       iva:                   ivaStr,
       iva_tasa:              iva,
       iva_monto:             parseFloat(mIva.toFixed(2)),
+      iva_nombre:            ivaNombre,       // "IVA" | "IVA Exento" | ""  (Name para Facturama)
+      iva_aplica:            ivaAplica,       // 1 => incluir traslado de IVA en Taxes
+      objeto_imp:            objetoImp,       // "01" | "02"  (ObjetoImp del concepto)
       retencion_tipo:        tipoRet,
       retencion_iva:         retIva,
       retencion_iva_monto:   parseFloat(mRetIva.toFixed(2)),
