@@ -397,6 +397,17 @@ footer a{color:var(--teal);text-decoration:none}
         <span class="hint">Numero de folio de la factura original</span>
       </div>
       <div class="f">
+        <label>IVA de la Factura que se paga <span class="r">*</span></label>
+        <select id="dr_iva">
+          <option value="0.16">16% — General</option>
+          <option value="0.08">8% — Zona fronteriza</option>
+          <option value="0">0% — Alimentos/Medicamentos</option>
+          <option value="exento">Exento — Serv. medicos, educacion</option>
+          <option value="no_objeto">No objeto de impuesto (01)</option>
+        </select>
+        <span class="hint">Debe coincidir con el IVA de la factura original que estas liquidando</span>
+      </div>
+      <div class="f">
         <label>Fecha y Hora del Pago <span class="r">*</span></label>
         <input type="datetime-local" id="fecha_pago">
         <span class="emsg" id="e-fecha_pago">Fecha requerida</span>
